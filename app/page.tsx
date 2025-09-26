@@ -54,8 +54,11 @@ export default function HomePage() {
       console.log('Categories response:', categoriesRes.data);
       
       // Handle both nested and flat response structures
-      setProducts(productsRes.data.products || productsRes.data || []);
-      setCategories(categoriesRes.data.categories || categoriesRes.data || []);
+      const productsData = productsRes.data?.success ? productsRes.data.products : productsRes.data.products || productsRes.data || [];
+      const categoriesData = categoriesRes.data?.success ? categoriesRes.data.categories : categoriesRes.data.categories || categoriesRes.data || [];
+      
+      setProducts(Array.isArray(productsData) ? productsData : []);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Failed to load products and categories. Please try again later.");
@@ -80,10 +83,28 @@ export default function HomePage() {
     // Check if product has variants
     if (!product.variants || product.variants.length === 0) {
       console.log('Cannot add to cart - no variants available');
+      alert('This product is not available for purchase.');
       return;
     }
     
-    const variant = product.variants[0];
+    // Filter to only active variants with inventory
+    const availableVariants = product.variants.filter(
+      variant => variant.active && variant.Inventory && variant.Inventory.quantity > 0
+    );
+    
+    if (availableVariants.length === 0) {
+      alert('This product is currently out of stock.');
+      return;
+    }
+    
+    // If multiple variants, redirect to product detail page for selection
+    if (availableVariants.length > 1) {
+      window.location.href = `/products/${product.id}`;
+      return;
+    }
+    
+    // Single variant - add directly to cart
+    const variant = availableVariants[0];
     console.log('Variant:', variant);
     console.log('Inventory:', variant?.Inventory);
     
@@ -103,8 +124,19 @@ export default function HomePage() {
       };
       console.log('Cart item:', cartItem);
       addItem(cartItem);
+      
+      // Show success feedback
+      const button = document.querySelector(`[data-product-id="${product.id}"]`);
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = 'Added!';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 1000);
+      }
     } else {
       console.log('Cannot add to cart - no Inventory or variant');
+      alert('This product is currently out of stock.');
     }
   };
 
@@ -285,36 +317,50 @@ export default function HomePage() {
 
           {viewMode === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <Card key={product.id} className="group hover:shadow-lg transition-all duration-200">
-                  <div className="relative">
-                    <div className="aspect-square bg-muted rounded-t-lg overflow-hidden">
-                      {product.coverImageUrl ? (
-                        <img
-                          src={product.coverImageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="h-16 w-16 text-muted-foreground" />
+              {filteredProducts.map((product) => {
+                const availableVariants = product.variants.filter(
+                  variant => variant.active && variant.Inventory && variant.Inventory.quantity > 0
+                );
+                const hasMultipleVariants = availableVariants.length > 1;
+                const isOutOfStock = availableVariants.length === 0;
+                
+                return (
+                  <Card key={product.id} className="group hover:shadow-lg transition-all duration-200">
+                    <div className="relative">
+                      <Link href={`/products/${product.id}`}>
+                        <div className="aspect-square bg-muted rounded-t-lg overflow-hidden cursor-pointer">
+                          {product.coverImageUrl ? (
+                            <img
+                              src={product.coverImageUrl}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="h-16 w-16 text-muted-foreground" />
+                            </div>
+                          )}
                         </div>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+                        onClick={() => toggleFavorite(product.id)}
+                      >
+                        <Heart className="h-4 w-4" />
+                      </Button>
+                      {isOutOfStock && (
+                        <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
+                          Out of Stock
+                        </Badge>
+                      )}
+                      {hasMultipleVariants && !isOutOfStock && (
+                        <Badge className="absolute top-2 left-2 bg-blue-500 text-white">
+                          {availableVariants.length} Options
+                        </Badge>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-                      onClick={() => toggleFavorite(product.id)}
-                    >
-                      <Heart className="h-4 w-4" />
-                    </Button>
-                    {product.variants && product.variants.length > 0 && product.variants[0]?.Inventory?.quantity === 0 && (
-                      <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
-                        Out of Stock
-                      </Badge>
-                    )}
-                  </div>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <Badge variant="secondary" className="text-xs">
@@ -331,28 +377,51 @@ export default function HomePage() {
                     </p>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-lg font-bold text-brand-blue">
-                          ${product.variants && product.variants.length > 0 ? product.variants[0]?.price || 0 : 0}
-                        </span>
-                        {product.variants && product.variants.length > 0 && product.variants[0]?.Inventory?.quantity && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({product.variants[0].Inventory.quantity} left)
-                          </span>
+                        {availableVariants.length > 0 ? (
+                          <div>
+                            {hasMultipleVariants ? (
+                              <div className="text-sm">
+                                <span className="text-lg font-bold text-brand-blue">
+                                  ${Math.min(...availableVariants.map(v => v.price))}
+                                </span>
+                                <span className="text-muted-foreground"> - </span>
+                                <span className="text-lg font-bold text-brand-blue">
+                                  ${Math.max(...availableVariants.map(v => v.price))}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-lg font-bold text-brand-blue">
+                                ${availableVariants[0].price}
+                              </span>
+                            )}
+                            <div className="text-xs text-muted-foreground">
+                              {hasMultipleVariants 
+                                ? `${availableVariants.length} options available`
+                                : `${availableVariants[0].Inventory?.quantity || 0} left`
+                              }
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-lg font-bold text-muted-foreground">
+                            Out of Stock
+                          </div>
                         )}
                       </div>
                       <Button
                         size="sm"
                         onClick={() => addToCart(product)}
-                        disabled={!product.variants || product.variants.length === 0 || product.variants[0]?.Inventory?.quantity === 0}
+                        disabled={isOutOfStock}
                         className="bg-gradient-brand hover:opacity-90"
+                        data-product-id={product.id}
                       >
                         <ShoppingCart className="h-3 w-3 mr-1" />
-                        Add
+                        {isOutOfStock ? 'Out of Stock' : hasMultipleVariants ? 'View Options' : 'Add'}
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="space-y-4">
@@ -409,11 +478,18 @@ export default function HomePage() {
                               </Button>
                               <Button
                                 onClick={() => addToCart(product)}
-                                disabled={!product.variants || product.variants.length === 0 || product.variants[0]?.Inventory?.quantity === 0}
+                                disabled={!product.variants || product.variants.length === 0 || !product.variants[0]?.Inventory || product.variants[0].Inventory.quantity === 0}
                                 className="bg-gradient-brand hover:opacity-90"
+                                data-product-id={product.id}
                               >
                                 <ShoppingCart className="h-4 w-4 mr-2" />
-                                Add to Cart
+                                {(() => {
+                                  const hasInventory = product.variants && 
+                                    product.variants.length > 0 && 
+                                    product.variants[0]?.Inventory && 
+                                    product.variants[0].Inventory.quantity > 0;
+                                  return hasInventory ? 'Add to Cart' : 'Out of Stock';
+                                })()}
                               </Button>
                             </div>
                           </div>

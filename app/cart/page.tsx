@@ -33,10 +33,8 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     setIsCheckingOut(true);
-    // TODO: Implement checkout flow
-    setTimeout(() => {
-      setIsCheckingOut(false);
-    }, 2000);
+    // Redirect to checkout page
+    window.location.href = '/checkout';
   };
 
   if (items.length === 0) {
