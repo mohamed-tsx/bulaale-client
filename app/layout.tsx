@@ -1,28 +1,39 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Bulaale Baby Care - Premium Baby Products",
-  description: "Discover premium baby care products for your little ones. Quality, safety, and comfort guaranteed.",
-  keywords: "baby care, baby products, infant care, baby clothes, baby toys, feeding supplies",
+  title: 'Bulaale Baby Care - Premium Baby Products',
+  description: 'Premium baby care products for your little ones. Quality, safety, and comfort you can trust.',
+  keywords: 'baby care, baby products, infant care, baby essentials, Somalia',
+  authors: [{ name: 'Bulaale Baby Care' }],
+  openGraph: {
+    title: 'Bulaale Baby Care - Premium Baby Products',
+    description: 'Premium baby care products for your little ones. Quality, safety, and comfort you can trust.',
+    type: 'website',
+    locale: 'en_US',
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${poppins.className} antialiased`}>
-        {children}
+    <html lang="en">
+      <body className={inter.className}>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
       </body>
     </html>
   );

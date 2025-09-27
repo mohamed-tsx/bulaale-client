@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4321/api/v1';
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:4321';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,6 +21,20 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Utility function to get full image URL
+export const getImageUrl = (imagePath: string | null | undefined): string => {
+  if (!imagePath) return '/placeholder-image.svg';
+  
+  // If it's already a full URL, return as is
+  if (imagePath.startsWith('http')) return imagePath;
+  
+  // If it starts with /uploads, prepend the image base URL
+  if (imagePath.startsWith('/uploads')) return `${IMAGE_BASE_URL}${imagePath}`;
+  
+  // Otherwise, assume it's a relative path and prepend the image base URL
+  return `${IMAGE_BASE_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+};
 
 // Types for our API responses
 export interface ApiResponse<T> {
@@ -53,10 +68,12 @@ export interface ProductVariant {
   color?: string;
   size?: string;
   optionSummary?: string;
-  price: number;
+  price: string; // Changed from number to string to match backend
   active: boolean;
   images: VariantImage[];
   Inventory?: Inventory;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProductImage {
@@ -146,20 +163,50 @@ export interface Shipment {
 
 // API functions
 export const productApi = {
-  getAll: () => api.get<Product[]>('/products'),
-  getById: (id: string) => api.get<Product>(`/products/${id}`),
-  getByCategory: (categoryId: string) => api.get<Product[]>(`/products?categoryId=${categoryId}`),
+  getAll: (params?: {
+    q?: string;
+    category?: string;
+    page?: number;
+    limit?: number;
+    sort?: string;
+  }) => api.get<{
+    success: boolean;
+    message: string;
+    products: Product[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }>('/products', { params }),
+  
+  getById: (id: string) => api.get<ApiResponse<Product>>(`/products/${id}`),
+  getBySlug: (slug: string) => api.get<ApiResponse<Product>>(`/products/slug/${slug}`),
+  getFeatured: () => api.get<ApiResponse<Product[]>>('/products/featured'),
+  getByCategory: (categoryId: string) => api.get<ApiResponse<Product[]>>(`/products?categoryId=${categoryId}`),
 };
 
 export const categoryApi = {
-  getAll: () => api.get<Category[]>('/categories'),
-  getById: (id: string) => api.get<Category>(`/categories/${id}`),
+  getAll: () => api.get<{
+    success: boolean;
+    message: string;
+    categories: Category[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>('/categories'),
+  getById: (id: string) => api.get<ApiResponse<Category>>(`/categories/${id}`),
 };
 
 export const orderApi = {
   create: (data: any) => api.post<ApiResponse<Order>>('/orders', data),
   getAll: (params?: any) => api.get<ApiResponse<{orders: Order[], pagination: any}>>('/orders', { params }),
   getById: (id: string) => api.get<ApiResponse<Order>>(`/orders/${id}`),
+  getMyOrders: () => api.get<ApiResponse<Order[]>>('/orders/me'),
   updateStatus: (id: string, status: string) => api.patch(`/orders/${id}/status`, { status }),
   cancel: (id: string, reason?: string) => api.patch(`/orders/${id}/cancel`, { reason }),
 };
@@ -167,7 +214,20 @@ export const orderApi = {
 export const paymentApi = {
   create: (data: any) => api.post<ApiResponse<Payment>>('/payments', data),
   getById: (id: string) => api.get<ApiResponse<Payment>>(`/payments/${id}`),
+  pay: (id: string, data: any) => api.post<ApiResponse<any>>(`/payments/${id}/pay`, data),
   updateStatus: (id: string, status: string, data?: any) => api.patch(`/payments/${id}/status`, { status, ...data }),
+};
+
+export const shipmentApi = {
+  getByOrderId: (orderId: string) => api.get<ApiResponse<Shipment[]>>(`/shipments/${orderId}`),
+};
+
+export const authApi = {
+  register: (data: { name: string; email: string; password: string }) => 
+    api.post<ApiResponse<{ user: any; token: string }>>('/user/register', data),
+  login: (data: { email: string; password: string }) => 
+    api.post<ApiResponse<{ user: any; token: string }>>('/user/login', data),
+  me: () => api.get<ApiResponse<any>>('/user/me'),
 };
 
 export const waafiApi = {

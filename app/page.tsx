@@ -1,571 +1,293 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { 
-  Search, 
-  ShoppingCart, 
-  Heart, 
-  Star, 
-  Filter, 
-  Grid3X3, 
-  List,
-  Baby,
-  Package,
-  Truck,
-  Shield,
-  ChevronDown,
-  Menu,
-  User,
-  Bell
-} from "lucide-react";
-import { api, Product, Category } from "@/lib/api";
-import { useCartStore } from "@/lib/stores/cartStore";
-import Link from "next/link";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowRight, CheckCircle, Truck, Shield, Heart, Star, Users, Award } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { productApi, categoryApi, Product, Category } from '@/lib/api';
+import ProductGrid from '@/components/ui/ProductGrid';
+import CategoryCard from '@/components/ui/CategoryCard';
+import { getImageUrl } from '@/lib/api';
 
 export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const { addItem, getTotalItems } = useCartStore();
+  const [newsletterEmail, setNewsletterEmail] = useState('');
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          productApi.getFeatured(),
+          categoryApi.getAll(),
+        ]);
+
+        if (productsResponse.data.success) {
+          setFeaturedProducts(productsResponse.data.products || []);
+        }
+        if (categoriesResponse.data.success) {
+          setCategories(categoriesResponse.data.categories || []);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('Fetching data from API...');
-      const [productsRes, categoriesRes] = await Promise.all([
-        api.get("/products"),
-        api.get("/categories")
-      ]);
-      
-      console.log('Products response:', productsRes.data);
-      console.log('Categories response:', categoriesRes.data);
-      
-      // Handle both nested and flat response structures
-      const productsData = productsRes.data?.success ? productsRes.data.products : productsRes.data.products || productsRes.data || [];
-      const categoriesData = categoriesRes.data?.success ? categoriesRes.data.categories : categoriesRes.data.categories || categoriesRes.data || [];
-      
-      setProducts(Array.isArray(productsData) ? productsData : []);
-      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setError("Failed to load products and categories. Please try again later.");
-      // Set empty arrays to prevent undefined issues
-      setProducts([]);
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle newsletter subscription
+    console.log('Newsletter subscription:', newsletterEmail);
+    setNewsletterEmail('');
   };
-
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || product.category?.id === selectedCategory;
-    return matchesSearch && matchesCategory && product.active;
-  });
-
-  const addToCart = (product: Product) => {
-    console.log('Adding to cart:', product);
-    
-    // Check if product has variants
-    if (!product.variants || product.variants.length === 0) {
-      console.log('Cannot add to cart - no variants available');
-      alert('This product is not available for purchase.');
-      return;
-    }
-    
-    // Filter to only active variants with inventory
-    const availableVariants = product.variants.filter(
-      variant => variant.active && variant.Inventory && variant.Inventory.quantity > 0
-    );
-    
-    if (availableVariants.length === 0) {
-      alert('This product is currently out of stock.');
-      return;
-    }
-    
-    // If multiple variants, redirect to product detail page for selection
-    if (availableVariants.length > 1) {
-      window.location.href = `/products/${product.id}`;
-      return;
-    }
-    
-    // Single variant - add directly to cart
-    const variant = availableVariants[0];
-    console.log('Variant:', variant);
-    console.log('Inventory:', variant?.Inventory);
-    
-    if (variant && variant.Inventory && variant.Inventory.quantity > 0) {
-      const cartItem = {
-        productId: product.id,
-        variantId: variant.id,
-        name: product.name,
-        price: Number(variant.price || 0),
-        quantity: 1,
-        image: product.coverImageUrl,
-        variant: {
-          color: variant.color,
-          size: variant.size,
-          optionSummary: variant.optionSummary,
-        },
-      };
-      console.log('Cart item:', cartItem);
-      addItem(cartItem);
-      
-      // Show success feedback
-      const button = document.querySelector(`[data-product-id="${product.id}"]`);
-      if (button) {
-        const originalText = button.textContent;
-        button.textContent = 'Added!';
-        setTimeout(() => {
-          button.textContent = originalText;
-        }, 1000);
-      }
-    } else {
-      console.log('Cannot add to cart - no Inventory or variant');
-      alert('This product is currently out of stock.');
-    }
-  };
-
-  const toggleFavorite = (productId: string) => {
-    // TODO: Implement favorite functionality
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-600 mb-4">{error}</div>
-            <Button onClick={fetchData} className="bg-gradient-brand hover:opacity-90">
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="bg-gradient-brand p-2 rounded-lg shadow-sm">
-                <Baby className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-brand-blue">Bulaale</h1>
-                <p className="text-sm text-brand-pink font-medium">Baby Care</p>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="flex-1 max-w-lg mx-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search for baby products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full"
-                />
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-xs bg-brand-pink text-white border-0">
-                  3
-                </Badge>
-              </Button>
-              
-              <Link href="/cart">
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="h-5 w-5" />
-                  {getTotalItems() > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-xs bg-brand-blue text-white border-0">
-                      {getTotalItems()}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-              
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="space-y-16">
       {/* Hero Section */}
-      <section className="bg-gradient-brand text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold mb-4">
-            Premium Baby Care
-          </h2>
-          <p className="text-xl md:text-2xl mb-8 opacity-90">
-            Quality products for your little ones' comfort and safety
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <div className="flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-full">
-              <Shield className="h-5 w-5" />
-              <span>100% Safe</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-full">
-              <Truck className="h-5 w-5" />
-              <span>Free Delivery</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-full">
-              <Package className="h-5 w-5" />
-              <span>Quality Guaranteed</span>
+      <section className="bg-gradient-to-r from-primary to-accent text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              Premium Baby Care Products
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 text-blue-100">
+              Quality, safety, and comfort you can trust for your little ones
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" variant="secondary">
+                <Link href="/shop">Shop Now</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
+                <Link href="/about">Learn More</Link>
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-8 bg-muted/30">
+      {/* What We Do */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            What We Do
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            We provide premium baby care products that prioritize safety, quality, and comfort for your little ones, 
+            sourced from trusted brands and designed to support healthy development.
+          </p>
+        </div>
+      </section>
+
+      {/* Value Cards */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-foreground">Categories</h3>
-            <Button
-              variant={selectedCategory === "all" ? "default" : "outline"}
-              onClick={() => setSelectedCategory("all")}
-              className="text-sm"
-            >
-              All Products
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Safe & Tested</h3>
+              <p className="text-gray-600 text-sm">All products meet international safety standards</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Heart className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Gentle Care</h3>
+              <p className="text-gray-600 text-sm">Designed with your baby's delicate skin in mind</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Truck className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Fast Delivery</h3>
+              <p className="text-gray-600 text-sm">Quick and reliable shipping across Somalia</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Award className="h-6 w-6 text-yellow-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Premium Quality</h3>
+              <p className="text-gray-600 text-sm">Only the best products for your baby</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">How It Works</h2>
+            <p className="text-xl text-gray-600">Simple steps to get the best for your baby</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white font-bold text-xl">1</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Browse Products</h3>
+              <p className="text-gray-600">Explore our carefully curated selection of baby care products</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white font-bold text-xl">2</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Add to Cart</h3>
+              <p className="text-gray-600">Select the products you need and add them to your cart</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white font-bold text-xl">3</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Fast Delivery</h3>
+              <p className="text-gray-600">Get your products delivered quickly and safely to your door</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Shop by Category */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Shop by Category</h2>
+            <p className="text-xl text-gray-600">Find exactly what you need for your baby</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-200 overflow-hidden animate-pulse">
+                  <div className="aspect-square bg-gray-200" />
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  </div>
+                </div>
+              ))
+            ) : (
+              categories.slice(0, 8).map((category) => (
+                <CategoryCard key={category.id} category={category} />
+              ))
+            )}
+          </div>
+          
+          <div className="text-center mt-8">
+            <Button asChild variant="outline">
+              <Link href="/categories">View All Categories</Link>
             </Button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {categories.map((category) => (
-              <Card
-                key={category.id}
-                className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                  selectedCategory === category.id ? "ring-2 ring-primary" : ""
-                }`}
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-gradient-brand rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Package className="h-6 w-6 text-white" />
-                  </div>
-                  <h4 className="font-medium text-sm">{category.name}</h4>
-                </CardContent>
-              </Card>
-            ))}
+        </div>
+      </section>
+
+      {/* Featured Products */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Products</h2>
+            <p className="text-xl text-gray-600">Our most popular and highly-rated products</p>
+          </div>
+          
+          <ProductGrid products={featuredProducts} loading={loading} />
+          
+          <div className="text-center mt-8">
+            <Button asChild>
+              <Link href="/shop">View All Products</Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Products Section */}
-      <section className="py-8">
+      {/* Trust Badges */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-foreground">
-              Products ({filteredProducts.length})
-            </h3>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Parents Trust Us</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">4.9/5 Rating</h3>
+              <p className="text-gray-600">From thousands of satisfied customers</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Users className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">10,000+ Happy Families</h3>
+              <p className="text-gray-600">Parents who trust us with their baby's care</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">100% Safe</h3>
+              <p className="text-gray-600">All products tested and certified safe</p>
             </div>
           </div>
-
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => {
-                const availableVariants = product.variants.filter(
-                  variant => variant.active && variant.Inventory && variant.Inventory.quantity > 0
-                );
-                const hasMultipleVariants = availableVariants.length > 1;
-                const isOutOfStock = availableVariants.length === 0;
-                
-                return (
-                  <Card key={product.id} className="group hover:shadow-lg transition-all duration-200">
-                    <div className="relative">
-                      <Link href={`/products/${product.id}`}>
-                        <div className="aspect-square bg-muted rounded-t-lg overflow-hidden cursor-pointer">
-                          {product.coverImageUrl ? (
-                            <img
-                              src={product.coverImageUrl}
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-16 w-16 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-                        onClick={() => toggleFavorite(product.id)}
-                      >
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                      {isOutOfStock && (
-                        <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
-                          Out of Stock
-                        </Badge>
-                      )}
-                      {hasMultipleVariants && !isOutOfStock && (
-                        <Badge className="absolute top-2 left-2 bg-blue-500 text-white">
-                          {availableVariants.length} Options
-                        </Badge>
-                      )}
-                    </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {product.category?.name}
-                      </Badge>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs text-muted-foreground">4.8</span>
-                      </div>
-                    </div>
-                    <h4 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h4>
-                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                      {product.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        {availableVariants.length > 0 ? (
-                          <div>
-                            {hasMultipleVariants ? (
-                              <div className="text-sm">
-                                <span className="text-lg font-bold text-brand-blue">
-                                  ${Math.min(...availableVariants.map(v => v.price))}
-                                </span>
-                                <span className="text-muted-foreground"> - </span>
-                                <span className="text-lg font-bold text-brand-blue">
-                                  ${Math.max(...availableVariants.map(v => v.price))}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-lg font-bold text-brand-blue">
-                                ${availableVariants[0].price}
-                              </span>
-                            )}
-                            <div className="text-xs text-muted-foreground">
-                              {hasMultipleVariants 
-                                ? `${availableVariants.length} options available`
-                                : `${availableVariants[0].Inventory?.quantity || 0} left`
-                              }
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-lg font-bold text-muted-foreground">
-                            Out of Stock
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => addToCart(product)}
-                        disabled={isOutOfStock}
-                        className="bg-gradient-brand hover:opacity-90"
-                        data-product-id={product.id}
-                      >
-                        <ShoppingCart className="h-3 w-3 mr-1" />
-                        {isOutOfStock ? 'Out of Stock' : hasMultipleVariants ? 'View Options' : 'Add'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredProducts.map((product) => (
-                <Card key={product.id} className="group hover:shadow-md transition-all duration-200">
-                  <div className="flex">
-                    <div className="w-32 h-32 bg-muted rounded-l-lg overflow-hidden flex-shrink-0">
-                      {product.coverImageUrl ? (
-                        <img
-                          src={product.coverImageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {product.category?.name}
-                            </Badge>
-                            <div className="flex items-center space-x-1">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs text-muted-foreground">4.8</span>
-                            </div>
-                          </div>
-                          <h4 className="font-semibold text-lg mb-1">{product.name}</h4>
-                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                            {product.description}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="text-xl font-bold text-brand-blue">
-                                ${product.variants && product.variants.length > 0 ? product.variants[0]?.price || 0 : 0}
-                              </span>
-                              {product.variants && product.variants.length > 0 && product.variants[0]?.Inventory?.quantity && (
-                                <span className="text-sm text-muted-foreground ml-2">
-                                  ({product.variants[0].Inventory.quantity} left)
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => toggleFavorite(product.id)}
-                              >
-                                <Heart className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                onClick={() => addToCart(product)}
-                                disabled={!product.variants || product.variants.length === 0 || !product.variants[0]?.Inventory || product.variants[0].Inventory.quantity === 0}
-                                className="bg-gradient-brand hover:opacity-90"
-                                data-product-id={product.id}
-                              >
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                {(() => {
-                                  const hasInventory = product.variants && 
-                                    product.variants.length > 0 && 
-                                    product.variants[0]?.Inventory && 
-                                    product.variants[0].Inventory.quantity > 0;
-                                  return hasInventory ? 'Add to Cart' : 'Out of Stock';
-                                })()}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No products found</h3>
-              <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="bg-gradient-brand p-2 rounded-lg shadow-sm">
-                  <Baby className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-brand-blue">Bulaale</h3>
-                  <p className="text-sm text-brand-pink font-medium">Baby Care</p>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Premium baby care products for your little ones' comfort and safety.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">About Us</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Contact</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Shipping Info</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Returns</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Customer Service</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Help Center</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Track Order</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Size Guide</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">FAQ</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Stay Connected</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Subscribe to our newsletter for the latest updates and offers.
-              </p>
-              <div className="flex space-x-2">
-                <Input placeholder="Enter your email" className="flex-1" />
-                <Button className="bg-gradient-brand hover:opacity-90">Subscribe</Button>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-border mt-8 pt-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              © 2024 Bulaale Baby Care. All rights reserved.
-            </p>
-          </div>
+      {/* Newsletter */}
+      <section className="py-16 bg-primary text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">Stay Updated</h2>
+          <p className="text-xl mb-8 text-blue-100">
+            Get the latest products, tips, and exclusive offers delivered to your inbox
+          </p>
+          
+          <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto flex gap-2">
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              className="bg-white text-gray-900 placeholder-gray-500"
+              required
+            />
+            <Button type="submit" variant="secondary">
+              Subscribe
+            </Button>
+          </form>
         </div>
-      </footer>
+      </section>
+
+      {/* CTA Band */}
+      <section className="py-16 bg-accent text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to Shop?</h2>
+          <p className="text-xl mb-8 text-pink-100">
+            Discover our full range of premium baby care products
+          </p>
+          <Button asChild size="lg" variant="secondary">
+            <Link href="/shop">
+              Start Shopping
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }

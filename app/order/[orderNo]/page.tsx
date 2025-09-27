@@ -1,0 +1,294 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, Package, Truck, MapPin, CreditCard, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { orderApi, Order, getImageUrl } from '@/lib/api';
+import OrderStatusTimeline from '@/components/ui/OrderStatusTimeline';
+
+const statusConfig = {
+  PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+  CONFIRMED: { label: 'Confirmed', color: 'bg-blue-100 text-blue-800' },
+  PROCESSING: { label: 'Processing', color: 'bg-purple-100 text-purple-800' },
+  SHIPPED: { label: 'Shipped', color: 'bg-indigo-100 text-indigo-800' },
+  DELIVERED: { label: 'Delivered', color: 'bg-green-100 text-green-800' },
+  CANCELLED: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+  REFUNDED: { label: 'Refunded', color: 'bg-gray-100 text-gray-800' },
+};
+
+export default function OrderDetailPage() {
+  const params = useParams();
+  const orderNo = params.orderNo as string;
+  
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (orderNo) {
+      fetchOrder();
+    }
+  }, [orderNo]);
+
+  const fetchOrder = async () => {
+    setLoading(true);
+    try {
+      const response = await orderApi.getById(orderNo);
+      if (response.data.success) {
+        setOrder(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/4 animate-pulse" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-64 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-32 bg-gray-200 rounded-lg animate-pulse" />
+            </div>
+            <div className="space-y-6">
+              <div className="h-48 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-32 bg-gray-200 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h1>
+        <p className="text-gray-600 mb-8">The order you're looking for doesn't exist.</p>
+        <Button asChild>
+          <Link href="/orders">Back to Orders</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8">
+        <Button variant="ghost" asChild>
+          <Link href="/orders">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Orders
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Order #{order.orderCode}</h1>
+          <p className="text-gray-600">
+            Placed on {new Date(order.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="ml-auto">
+          <Badge className={statusConfig[order.status].color}>
+            {statusConfig[order.status].label}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Order Status Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OrderStatusTimeline order={order} />
+            </CardContent>
+          </Card>
+
+          {/* Order Items */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={getImageUrl(item.productVariant.product.coverImageUrl)}
+                        alt={item.productVariant.product.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-image.svg';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900">
+                        {item.productVariant.product.name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {item.productVariant.size && `Size: ${item.productVariant.size}`}
+                        {item.productVariant.color && ` • Color: ${item.productVariant.color}`}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        SKU: {item.productVariant.sku}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">
+                        ${Number(item.unitPrice).toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Qty: {item.qty}
+                      </p>
+                      <p className="font-medium text-primary">
+                        ${(Number(item.unitPrice) * item.qty).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Shipping Information */}
+          {order.shippingAddressId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Shipping Address
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-gray-600">
+                  <p>Address information will be displayed here</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Note: Shipping address details are managed by the backend
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Order Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">${order.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Shipping</span>
+                <span className="font-medium">${order.shippingFee.toFixed(2)}</span>
+              </div>
+              {order.discountTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Discount</span>
+                  <span className="font-medium text-green-600">-${order.discountTotal.toFixed(2)}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-lg font-semibold text-gray-900">Total</span>
+                <span className="text-lg font-bold text-primary">${order.grandTotal.toFixed(2)}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Information */}
+          {order.payments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {order.payments.map((payment) => (
+                  <div key={payment.id} className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Method</span>
+                      <span className="text-sm font-medium">{payment.method}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Amount</span>
+                      <span className="text-sm font-medium">${payment.amount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Status</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {payment.status}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Date</span>
+                      <span className="text-sm font-medium">
+                        {new Date(payment.initiatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Order Notes */}
+          {order.notes && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">{order.notes}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button asChild className="w-full">
+                <Link href="/shop">Continue Shopping</Link>
+              </Button>
+              {order.status === 'DELIVERED' && (
+                <Button variant="outline" className="w-full">
+                  Leave Review
+                </Button>
+              )}
+              {order.status === 'PENDING' && (
+                <Button variant="outline" className="w-full">
+                  Cancel Order
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

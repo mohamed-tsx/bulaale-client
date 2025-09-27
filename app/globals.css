@@ -43,57 +43,40 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 1rem; /* rounded-2xl equivalent */
   
-  /* Light theme - Clean and modern for e-commerce */
-  --background: oklch(0.99 0.005 240); /* Very light blue tint */
-  --foreground: oklch(0.15 0.02 240); /* Dark blue-gray */
-  --card: oklch(1 0 0); /* Pure white */
-  --card-foreground: oklch(0.15 0.02 240);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 240);
+  /* Design Tokens - Solid Colors */
+  --background: #F9FAFB; /* Light gray background */
+  --foreground: #111827; /* Dark text */
+  --card: #FFFFFF; /* White cards */
+  --card-foreground: #111827;
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
   
-  /* Brand colors - Primary Blue */
-  --primary: oklch(0.55 0.18 240); /* #0065c1 - Vibrant blue */
-  --primary-foreground: oklch(0.98 0.01 240);
+  /* Primary Blue */
+  --primary: #3B82F6;
+  --primary-foreground: #FFFFFF;
   
-  /* Secondary - Soft blue-gray */
-  --secondary: oklch(0.96 0.01 240);
-  --secondary-foreground: oklch(0.25 0.05 240);
+  /* Secondary - Light gray */
+  --secondary: #F3F4F6;
+  --secondary-foreground: #374151;
   
-  /* Muted - Very subtle */
-  --muted: oklch(0.95 0.01 240);
-  --muted-foreground: oklch(0.5 0.02 240);
+  /* Muted - Very light gray */
+  --muted: #F9FAFB;
+  --muted-foreground: #6B7280;
   
-  /* Accent - Brand Pink */
-  --accent: oklch(0.7 0.22 320); /* #f955af - Vibrant pink */
-  --accent-foreground: oklch(0.98 0.01 240);
+  /* Accent Pink */
+  --accent: #EC4899;
+  --accent-foreground: #FFFFFF;
   
-  /* Destructive - Modern red */
-  --destructive: oklch(0.6 0.25 15);
-  --destructive-foreground: oklch(0.98 0.01 240);
+  /* Destructive - Red */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
   
   /* Borders and inputs */
-  --border: oklch(0.9 0.01 240);
-  --input: oklch(0.9 0.01 240);
-  --ring: oklch(0.55 0.18 240);
-  
-  /* Chart colors - Brand palette */
-  --chart-1: oklch(0.55 0.18 240); /* Primary Blue */
-  --chart-2: oklch(0.7 0.22 320); /* Accent Pink */
-  --chart-3: oklch(0.6 0.15 200); /* Cyan Blue */
-  --chart-4: oklch(0.75 0.18 340); /* Magenta Pink */
-  --chart-5: oklch(0.5 0.12 260); /* Deep Blue */
-  
-  /* Sidebar - Clean and minimal */
-  --sidebar: oklch(0.98 0.01 240);
-  --sidebar-foreground: oklch(0.2 0.03 240);
-  --sidebar-primary: oklch(0.55 0.18 240);
-  --sidebar-primary-foreground: oklch(0.98 0.01 240);
-  --sidebar-accent: oklch(0.94 0.02 240);
-  --sidebar-accent-foreground: oklch(0.3 0.05 240);
-  --sidebar-border: oklch(0.88 0.01 240);
-  --sidebar-ring: oklch(0.55 0.18 240);
+  --border: #E5E7EB;
+  --input: #F3F4F6;
+  --ring: #3B82F6;
 }
 
 .dark {

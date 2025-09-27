@@ -1,298 +1,184 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  ArrowLeft,
-  CreditCard,
-  Truck,
-  Shield,
-  Baby
-} from "lucide-react";
-import { useCartStore } from "@/lib/stores/cartStore";
-import Link from "next/link";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useCartStore } from '@/lib/stores/cart-store';
+import { getImageUrl } from '@/lib/api';
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, getTotalItems, getTotalPrice } = useCartStore();
+  const { items, setQuantity, removeItem, getSubtotal, clearCart } = useCartStore();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-
-  const handleQuantityChange = (id: string, newQuantity: number) => {
-    updateQuantity(id, newQuantity);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    removeItem(id);
-  };
 
   const handleCheckout = () => {
     setIsCheckingOut(true);
-    // Redirect to checkout page
     window.location.href = '/checkout';
   };
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="bg-card border-b border-border sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-2">
-                <div className="bg-gradient-brand p-2 rounded-lg shadow-sm">
-                  <Baby className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-brand-blue">Bulaale</h1>
-                  <p className="text-sm text-brand-pink font-medium">Baby Care</p>
-                </div>
-              </div>
-              <Link href="/">
-                <Button variant="outline">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Continue Shopping
-                </Button>
-              </Link>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-16">
+          <div className="text-gray-400 mb-6">
+            <ShoppingBag className="mx-auto h-16 w-16" />
           </div>
-        </header>
-
-        {/* Empty Cart */}
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <Card className="text-center">
-            <CardContent className="p-12">
-              <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-                <ShoppingCart className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">Your cart is empty</h2>
-              <p className="text-muted-foreground mb-8">
-                Looks like you haven't added any items to your cart yet.
-              </p>
-              <Link href="/">
-                <Button className="bg-gradient-brand hover:opacity-90">
-                  Start Shopping
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h1>
+          <p className="text-gray-600 mb-8">
+            Looks like you haven't added any items to your cart yet.
+          </p>
+          <Button asChild size="lg">
+            <Link href="/shop">Start Shopping</Link>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2">
-              <div className="bg-gradient-brand p-2 rounded-lg shadow-sm">
-                <Baby className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-brand-blue">Bulaale</h1>
-                <p className="text-sm text-brand-pink font-medium">Baby Care</p>
-              </div>
-            </div>
-            <Link href="/">
-              <Button variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Continue Shopping
-              </Button>
-            </Link>
-          </div>
+      <div className="flex items-center gap-4 mb-8">
+        <Button variant="ghost" asChild>
+          <Link href="/shop">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Continue Shopping
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
+          <p className="text-gray-600">{items.length} item{items.length !== 1 ? 's' : ''} in your cart</p>
         </div>
-      </header>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Shopping Cart</h1>
-          <Badge variant="secondary" className="text-lg px-3 py-1">
-            {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'}
-          </Badge>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-all duration-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    {/* Product Image */}
-                    <div className="w-20 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Product Details */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg text-foreground mb-1">
-                        {item.name}
-                      </h3>
-                      <div className="flex items-center space-x-2 mb-2">
-                        {item.variant.color && (
-                          <Badge variant="outline" className="text-xs">
-                            {item.variant.color}
-                          </Badge>
-                        )}
-                        {item.variant.size && (
-                          <Badge variant="outline" className="text-xs">
-                            {item.variant.size}
-                          </Badge>
-                        )}
-                        {item.variant.optionSummary && (
-                          <Badge variant="outline" className="text-xs">
-                            {item.variant.optionSummary}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        ${Number(item.price || 0).toFixed(2)} each
-                      </p>
-                    </div>
-
-                    {/* Quantity Controls */}
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
-                        className="w-16 text-center"
-                        min="1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {/* Price and Actions */}
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-brand-blue mb-2">
-                        ${(Number(item.price || 0) * item.quantity).toFixed(2)}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {/* Clear Cart Button */}
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                onClick={clearCart}
-                className="text-destructive hover:text-destructive"
-              >
-                Clear Cart
-              </Button>
-            </div>
-          </div>
-
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-24">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-                <CardDescription>
-                  Review your items and proceed to checkout
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-semibold">${getTotalPrice().toFixed(2)}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Cart Items */}
+        <div className="lg:col-span-2 space-y-4">
+          {items.map((item) => (
+            <div key={item.variantId} className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center space-x-4">
+                {/* Product Image */}
+                <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <img
+                    src={getImageUrl(item.image)}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-image.svg';
+                    }}
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span className="font-semibold text-green-600">Free</span>
+
+                {/* Product Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    {item.name}
+                  </h3>
+                  {item.variant && (
+                    <p className="text-sm text-gray-500 mb-2">
+                      {Object.values(item.variant).filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  <p className="text-lg font-semibold text-primary">
+                    ${Number(item.price).toFixed(2)}
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax</span>
-                  <span className="font-semibold">$0.00</span>
-                </div>
-                <div className="border-t pt-4">
-                  <div className="flex justify-between">
-                    <span className="text-lg font-bold">Total</span>
-                    <span className="text-lg font-bold text-brand-blue">
-                      ${getTotalPrice().toFixed(2)}
+
+                {/* Quantity Controls */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center border border-gray-200 rounded-lg">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setQuantity(item.variantId, item.quantity - 1)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="px-3 py-1 text-sm font-medium min-w-[3rem] text-center">
+                      {item.quantity}
                     </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setQuantity(item.variantId, item.quantity + 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
                   </div>
-                </div>
 
-                <Link href="/checkout" className="w-full">
+                  {/* Remove Button */}
                   <Button
-                    className="w-full bg-gradient-brand hover:opacity-90 h-12 text-lg"
-                    disabled={isCheckingOut}
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-red-500"
+                    onClick={() => removeItem(item.variantId)}
                   >
-                    {isCheckingOut ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="h-5 w-5 mr-2" />
-                        Proceed to Checkout
-                      </>
-                    )}
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                </Link>
-
-                {/* Trust Badges */}
-                <div className="space-y-3 pt-4 border-t">
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Truck className="h-4 w-4 text-green-600" />
-                    <span>Free shipping on orders over $50</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Shield className="h-4 w-4 text-blue-600" />
-                    <span>Secure payment processing</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Baby className="h-4 w-4 text-pink-600" />
-                    <span>100% safe for babies</span>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          ))}
+
+          {/* Clear Cart */}
+          <div className="text-center pt-4">
+            <Button
+              variant="ghost"
+              onClick={clearCart}
+              className="text-gray-500 hover:text-red-500"
+            >
+              Clear Cart
+            </Button>
+          </div>
+        </div>
+
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 sticky top-24">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
+            
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">${getSubtotal().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Shipping</span>
+                <span className="font-medium text-green-600">Free</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tax</span>
+                <span className="font-medium">$0.00</span>
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex justify-between">
+                  <span className="text-lg font-semibold text-gray-900">Total</span>
+                  <span className="text-lg font-bold text-primary">${getSubtotal().toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              className="w-full mb-4"
+              size="lg"
+              onClick={handleCheckout}
+              disabled={isCheckingOut}
+            >
+              {isCheckingOut ? 'Processing...' : 'Proceed to Checkout'}
+            </Button>
+
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-2">Secure checkout</p>
+              <div className="flex justify-center space-x-4 text-xs text-gray-400">
+                <span>✓ SSL Encrypted</span>
+                <span>✓ Safe Payment</span>
+                <span>✓ Easy Returns</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
