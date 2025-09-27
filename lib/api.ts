@@ -22,6 +22,12 @@ api.interceptors.request.use((config) => {
 });
 
 // Types for our API responses
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -151,16 +157,16 @@ export const categoryApi = {
 };
 
 export const orderApi = {
-  create: (data: any) => api.post<Order>('/orders', data),
-  getAll: (params?: any) => api.get<{orders: Order[], pagination: any}>('/orders', { params }),
-  getById: (id: string) => api.get<Order>(`/orders/${id}`),
+  create: (data: any) => api.post<ApiResponse<Order>>('/orders', data),
+  getAll: (params?: any) => api.get<ApiResponse<{orders: Order[], pagination: any}>>('/orders', { params }),
+  getById: (id: string) => api.get<ApiResponse<Order>>(`/orders/${id}`),
   updateStatus: (id: string, status: string) => api.patch(`/orders/${id}/status`, { status }),
   cancel: (id: string, reason?: string) => api.patch(`/orders/${id}/cancel`, { reason }),
 };
 
 export const paymentApi = {
-  create: (data: any) => api.post<Payment>('/payments', data),
-  getById: (id: string) => api.get<Payment>(`/payments/${id}`),
+  create: (data: any) => api.post<ApiResponse<Payment>>('/payments', data),
+  getById: (id: string) => api.get<ApiResponse<Payment>>(`/payments/${id}`),
   updateStatus: (id: string, status: string, data?: any) => api.patch(`/payments/${id}/status`, { status, ...data }),
 };
 

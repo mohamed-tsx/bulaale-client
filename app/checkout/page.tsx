@@ -19,7 +19,7 @@ import {
   Package
 } from "lucide-react";
 import { useCartStore } from "@/lib/stores/cartStore";
-import { waafiApi, orderApi, paymentApi } from "@/lib/api";
+import { waafiApi, orderApi, paymentApi, ApiResponse, Order, Payment } from "@/lib/api";
 import Link from "next/link";
 
 export default function CheckoutPage() {
@@ -52,24 +52,24 @@ export default function CheckoutPage() {
         items: items.map(item => ({
           productVariantId: item.variantId,
           qty: item.quantity,
-          unitPrice: item.price,
         })),
-        shippingAddress: {
-          name: shippingInfo.name,
-          address: shippingInfo.address,
-          city: shippingInfo.city,
-          phone: shippingInfo.phone,
-        },
-        subtotal: getTotalPrice(),
-        shippingFee: 0,
-        discountTotal: 0,
-        grandTotal: getTotalPrice(),
+        notes: `Shipping to: ${shippingInfo.name}, ${shippingInfo.address}, ${shippingInfo.city}`,
       };
 
+      console.log('Creating order with data:', orderData);
+
       // Create order via API
-      const orderResponse = await orderApi.create(orderData);
-      const createdOrder = orderResponse.data;
+      const orderResponse = await orderApi.create(orderData) as { data: ApiResponse<Order> };
+      console.log('Order response:', orderResponse);
+      
+      if (!orderResponse.data.success) {
+        throw new Error(orderResponse.data.message || 'Failed to create order');
+      }
+      
+      const createdOrder = orderResponse.data.data; // The actual order data is nested under data.data
       setOrderId(createdOrder.id);
+
+      console.log('Created order:', createdOrder);
 
       // Create payment
       const paymentData = {
@@ -79,16 +79,28 @@ export default function CheckoutPage() {
         phone: phoneNumber,
       };
 
+      console.log('Creating payment with data:', paymentData);
+
       // Create payment via API
-      const paymentResponse = await paymentApi.create(paymentData);
-      const createdPayment = paymentResponse.data;
+      const paymentResponse = await paymentApi.create(paymentData) as { data: ApiResponse<Payment> };
+      console.log('Payment response:', paymentResponse);
+      
+      if (!paymentResponse.data.success) {
+        throw new Error(paymentResponse.data.message || 'Failed to create payment');
+      }
+      
+      const createdPayment = paymentResponse.data.data; // The actual payment data is nested under data.data
+
+      console.log('Processing payment with Waafi...');
 
       // Process payment with Waafi simulation
-      await waafiApi.processPayment(createdPayment.id);
+      const waafiResponse = await waafiApi.processPayment(createdPayment.id);
+      console.log('Waafi response:', waafiResponse);
 
       // Simulate payment processing
       setTimeout(async () => {
         try {
+          console.log('Simulating payment acceptance...');
           // Simulate user accepting the payment
           await waafiApi.acceptPayment(createdPayment.id);
           setPaymentStatus("success");
@@ -103,6 +115,9 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error("Payment error:", error);
       setPaymentStatus("failed");
+      // Handle error properly with type checking
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Payment failed: ${errorMessage}`);
     }
   };
 
