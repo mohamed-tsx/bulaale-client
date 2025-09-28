@@ -32,9 +32,10 @@ export default function ProductDetailPage() {
     try {
       const response = await productApi.getById(productId);
       if (response.data.success) {
-        setProduct(response.data.data);
+        console.log(response.data.product);
+        setProduct(response.data.product);
         // Fetch related products
-        fetchRelatedProducts(response.data.data.categoryId);
+        fetchRelatedProducts(response.data.product.categoryId);
       }
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -47,7 +48,7 @@ export default function ProductDetailPage() {
     try {
       const response = await productApi.getByCategory(categoryId);
       if (response.data.success) {
-        setRelatedProducts(response.data.data.slice(0, 4));
+        setRelatedProducts(response.data.product.slice(0, 4));
       }
     } catch (error) {
       console.error('Error fetching related products:', error);
@@ -244,8 +245,10 @@ export default function ProductDetailPage() {
                   </h4>
                   <div className="space-y-1 text-sm text-gray-600">
                     <p><strong>SKU:</strong> {variant.sku}</p>
-                    <p><strong>Price:</strong> ${variant.price.toFixed(2)}</p>
-                    <p><strong>Stock:</strong> {variant.stock} available</p>
+                    <p><strong>Price:</strong> ${Number(variant.price).toFixed(2)}</p>
+                    {typeof (variant as any).Inventory !== "undefined" && (
+                      <p><strong>Stock:</strong> {(variant as any).Inventory.quantity} available</p>
+                    )}
                   </div>
                 </div>
               ))}
