@@ -7,16 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
   Search, 
-  ShoppingCart, 
   Star, 
   Grid3X3, 
   List,
   Package,
   Filter,
-  ArrowLeft
+  ArrowLeft,
+  Eye
 } from "lucide-react";
 import { api, Product, Category, getImageUrl } from "@/lib/api";
-import { useCartStore } from "@/lib/stores/cartStore";
 import Link from "next/link";
 
 export default function ProductsPage() {
@@ -28,7 +27,6 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<string>("name");
-  const { addItem } = useCartStore();
 
   useEffect(() => {
     fetchData();
@@ -72,63 +70,16 @@ export default function ProductsPage() {
       case "price-low":
         const aPrice = a.variants[0]?.price || 0;
         const bPrice = b.variants[0]?.price || 0;
-        return aPrice - bPrice;
+        return Number(aPrice) - Number(bPrice);
       case "price-high":
         const aPriceHigh = a.variants[0]?.price || 0;
         const bPriceHigh = b.variants[0]?.price || 0;
-        return bPriceHigh - aPriceHigh;
+        return Number(bPriceHigh) - Number(aPriceHigh);
       default:
         return 0;
     }
   });
 
-  const addToCart = (product: Product) => {
-    if (!product.variants || product.variants.length === 0) {
-      alert('This product is not available for purchase.');
-      return;
-    }
-    
-    const availableVariants = product.variants.filter(
-      variant => variant.active && variant.Inventory && variant.Inventory.quantity > 0
-    );
-    
-    if (availableVariants.length === 0) {
-      alert('This product is currently out of stock.');
-      return;
-    }
-    
-    if (availableVariants.length > 1) {
-      window.location.href = `/products/${product.id}`;
-      return;
-    }
-    
-    const variant = availableVariants[0];
-    if (variant && variant.Inventory && variant.Inventory.quantity > 0) {
-      const cartItem = {
-        productId: product.id,
-        variantId: variant.id,
-        name: product.name,
-        price: Number(variant.price || 0),
-        quantity: 1,
-        image: product.coverImageUrl,
-        variant: {
-          color: variant.color,
-          size: variant.size,
-          optionSummary: variant.optionSummary,
-        },
-      };
-      addItem(cartItem);
-      
-      const button = document.querySelector(`[data-product-id="${product.id}"]`);
-      if (button) {
-        const originalText = button.textContent;
-        button.textContent = 'Added!';
-        setTimeout(() => {
-          button.textContent = originalText;
-        }, 1000);
-      }
-    }
-  };
 
   if (loading) {
     return (
@@ -310,16 +261,16 @@ export default function ProductsPage() {
                           </span>
                         )}
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => addToCart(product)}
-                        disabled={isOutOfStock}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
-                        data-product-id={product.id}
-                      >
-                        <ShoppingCart className="h-3 w-3 mr-1" />
-                        {isOutOfStock ? 'Out of Stock' : 'Add'}
-                      </Button>
+                      <Link href={`/product/${product.id}`}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs px-3 py-1"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View Details
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>
@@ -375,15 +326,14 @@ export default function ProductsPage() {
                               </span>
                             )}
                           </div>
-                          <Button
-                            onClick={() => addToCart(product)}
-                            disabled={!product.variants || product.variants.length === 0 || !product.variants[0]?.Inventory || product.variants[0].Inventory.quantity === 0}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4"
-                            data-product-id={product.id}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Add to Cart
-                          </Button>
+                          <Link href={`/product/${product.id}`}>
+                            <Button
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                     </div>

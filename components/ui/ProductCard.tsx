@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCartStore } from '@/lib/stores/cart-store';
 import { Product, ProductVariant } from '@/lib/api';
 import { getImageUrl } from '@/lib/api';
 
@@ -15,37 +14,13 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, variant = 'default' }: ProductCardProps) {
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const { addItem } = useCartStore();
 
   // Get the first variant as default
   const defaultVariant = product.variants?.[0];
   const minPrice = Math.min(...product.variants.map(v => Number(v.price)));
   const maxPrice = Math.max(...product.variants.map(v => Number(v.price)));
   const hasMultiplePrices = minPrice !== maxPrice;
-
-  const handleAddToCart = async () => {
-    if (!defaultVariant) return;
-    
-    setIsAddingToCart(true);
-    try {
-        addItem({
-          id: product.id,
-          productId: product.id,
-          variantId: defaultVariant.id,
-          name: product.name,
-          price: Number(defaultVariant.price),
-          image: product.coverImageUrl,
-          variant: {
-            size: defaultVariant.size,
-            color: defaultVariant.color,
-          },
-        });
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
 
   if (variant === 'minimal') {
     return (
@@ -83,19 +58,20 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
                 </span>
               )}
             </div>
-            <Button
-              size="sm"
-              onClick={handleAddToCart}
-              disabled={isAddingToCart || !defaultVariant}
-              className="h-8 px-3 text-xs"
-            >
-              <ShoppingCart className="h-3 w-3 mr-1" />
-              Add
-            </Button>
+            <Link href={`/product/${product.id}`}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-3 text-xs"
+              >
+                View Details
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
     );
+  }
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200">
@@ -159,16 +135,12 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
           )}
         </div>
         
-        <Button
-          className="w-full"
-          onClick={handleAddToCart}
-          disabled={isAddingToCart || !defaultVariant}
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          {isAddingToCart ? 'Adding...' : 'Add to Cart'}
-        </Button>
+        <Link href={`/product/${product.id}`}>
+          <Button className="w-full">
+            View Details & Order
+          </Button>
+        </Link>
       </div>
     </div>
   );
-}
 }
