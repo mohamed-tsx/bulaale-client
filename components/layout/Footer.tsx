@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import Image from 'next/image';
 
 const shopLinks = [
   { name: 'All Products', href: '/shop' },
@@ -30,10 +31,7 @@ export default function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">B</span>
-              </div>
-              <span className="text-xl font-bold">Bulaale Baby Care</span>
+              <Image src="/logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
             </div>
             <p className="text-gray-300 text-sm">
               Premium baby care products for your little ones. Quality, safety, and comfort you can trust.

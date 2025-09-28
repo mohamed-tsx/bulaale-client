@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCartStore } from '@/lib/stores/cart-store';
 import CartDrawer from '@/components/cart/CartDrawer';
+import Image from 'next/image';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -31,10 +32,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">B</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">Bulaale Baby Care</span>
+            <Image src="/logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
           </Link>
 
           {/* Desktop Navigation */}
