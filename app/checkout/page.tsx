@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { CreditCard, MapPin, User, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,12 +16,14 @@ import { orderApi, paymentApi } from '@/lib/api';
 import { getImageUrl } from '@/lib/api';
 import { useErrorHandler } from '@/lib/contexts/error-handler-context';
 import { useOrdersStore } from '@/lib/stores';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { handleError, handleSuccess } = useErrorHandler();
   const { items, getSubtotal, clearCart } = useCartStore();
   const { addOrder, setCurrentOrder } = useOrdersStore();
+  const { user, isAuthenticated } = useAuthStore();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -62,6 +65,7 @@ export default function CheckoutPage() {
     try {
       // Create order
       const orderData = {
+        userId: isAuthenticated && user ? user.id : null, // Include userId if user is authenticated
         items: items.map(item => ({
           productVariantId: item.variantId,
           quantity: item.quantity,
@@ -135,6 +139,17 @@ export default function CheckoutPage() {
                   <MapPin className="h-5 w-5" />
                   Shipping Information
                 </CardTitle>
+                {isAuthenticated && user ? (
+                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                    <User className="h-4 w-4" />
+                    <span>Logged in as: {user.name}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-md">
+                    <User className="h-4 w-4" />
+                    <span>Guest checkout - <Link href="/auth/login" className="underline">Login</Link> to save your order</span>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

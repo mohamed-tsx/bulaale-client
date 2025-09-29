@@ -7,19 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { productApi, Product } from '@/lib/api';
-import AddToCart from '@/components/ui/AddToCart';
+import AttributeVariantSelector from '@/components/AttributeVariantSelector';
 import ProductGrid from '@/components/ui/ProductGrid';
 import { getImageUrl } from '@/lib/api';
+import { useCartStore } from '@/lib/stores/cart-store';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
+  const { addItem } = useCartStore();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
 
   useEffect(() => {
     if (productId) {
@@ -53,6 +56,29 @@ export default function ProductDetailPage() {
     } catch (error) {
       console.error('Error fetching related products:', error);
     }
+  };
+
+  const handleVariantSelect = (variant: any) => {
+    setSelectedVariant(variant);
+  };
+
+  const handleAddToCart = (variant: any) => {
+    if (!product || !variant) return;
+    
+    addItem({
+      productId: product.id,
+      variantId: variant.id,
+      name: product.name,
+      price: Number(variant.price),
+      quantity: 1,
+      image: product.coverImageUrl,
+      variant: {
+        size: variant.size,
+        color: variant.color,
+        optionSummary: variant.optionSummary,
+        sku: variant.sku,
+      },
+    });
   };
 
   if (loading) {
@@ -94,6 +120,27 @@ export default function ProductDetailPage() {
   const minPrice = Math.min(...product.variants.map(v => Number(v.price)));
   const maxPrice = Math.max(...product.variants.map(v => Number(v.price)));
   const hasMultiplePrices = minPrice !== maxPrice;
+  
+  // Get display images - show variant images if selected, otherwise show product images
+  const getDisplayImages = () => {
+    if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
+      return selectedVariant.images.map((img: any) => img.url);
+    }
+    return images;
+  };
+  
+  const displayImages = getDisplayImages();
+  
+  // Get display price - show selected variant price if available, otherwise show range
+  const getDisplayPrice = () => {
+    if (selectedVariant) {
+      return `$${Number(selectedVariant.price).toFixed(2)}`;
+    }
+    if (hasMultiplePrices) {
+      return `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+    }
+    return `$${minPrice.toFixed(2)}`;
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -102,7 +149,7 @@ export default function ProductDetailPage() {
         <div className="space-y-4">
           <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden">
             <img
-              src={getImageUrl(images[selectedImage])}
+              src={getImageUrl(displayImages[selectedImage])}
               alt={product.name}
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -112,9 +159,9 @@ export default function ProductDetailPage() {
             />
           </div>
           
-          {images.length > 1 && (
+          {displayImages.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
-              {images.map((image, index) => (
+              {displayImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
@@ -159,11 +206,7 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="text-3xl font-bold text-primary mb-6">
-              {hasMultiplePrices ? (
-                <span>${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}</span>
-              ) : (
-                <span>${minPrice.toFixed(2)}</span>
-              )}
+              {getDisplayPrice()}
             </div>
           </div>
 
@@ -174,8 +217,12 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Add to Cart */}
-          <AddToCart product={product} />
+          {/* Variant Selection */}
+          <AttributeVariantSelector
+            variants={product.variants}
+            onVariantSelect={handleVariantSelect}
+            onAddToCart={handleAddToCart}
+          />
 
           {/* Action Buttons */}
           <div className="flex gap-3">
