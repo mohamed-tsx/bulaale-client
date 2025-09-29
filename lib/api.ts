@@ -135,15 +135,35 @@ export interface Order {
   orderCode: string;
   userId?: string;
   status: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
-  subtotal: number;
-  shippingFee: number;
-  discountTotal: number;
-  grandTotal: number;
+  subtotal: string | number; // Can be string from API or number - updated for currency formatting
+  vatAmount?: string | number; // Can be string from API or number - updated for currency formatting
+  vatRate?: string | number; // Can be string from API or number - updated for currency formatting
+  shippingFee: string | number; // Can be string from API or number - updated for currency formatting
+  discountTotal: string | number; // Can be string from API or number - updated for currency formatting
+  grandTotal: string | number; // Can be string from API or number - updated for currency formatting
   shippingAddressId?: string;
   notes?: string;
   items: OrderItem[];
   payments: Payment[];
   shipments: Shipment[];
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    phonenumber: string;
+  };
+  shippingAddress?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    postalCode?: string;
+    country: string;
+    notes?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -153,8 +173,23 @@ export interface OrderItem {
   orderId: string;
   productVariantId: string;
   qty: number;
-  unitPrice: number;
-  productVariant: ProductVariant;
+  unitPrice: string | number; // Can be string from API or number
+  productVariant: {
+    id: string;
+    sku: string;
+    color?: string;
+    size?: string;
+    optionSummary?: string;
+    price: string;
+    active: boolean;
+    product: {
+      id: string;
+      name: string;
+      description?: string;
+      brand?: string;
+      coverImageUrl?: string;
+    };
+  };
   createdAt: string;
 }
 
@@ -163,7 +198,7 @@ export interface Payment {
   orderId: string;
   method: 'CASH' | 'EVC_PLUS' | 'ZAAD_SERVICE' | 'SAHAL_SERVICE' | 'BANK_TRANSFER' | 'CREDIT_CARD';
   status: 'INITIATED' | 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
-  amount: number;
+  amount: string | number; // Can be string from API or number
   phone?: string;
   providerTxnId?: string;
   merchantRef?: string;
@@ -230,6 +265,7 @@ export const orderApi = {
   create: (data: any) => api.post<ApiResponse<Order>>('/orders', data),
   getAll: (params?: any) => api.get<ApiResponse<{orders: Order[], pagination: any}>>('/orders', { params }),
   getById: (id: string) => api.get<ApiResponse<Order>>(`/orders/${id}`),
+  getByCode: (orderCode: string) => api.get<ApiResponse<Order>>(`/orders/track/${orderCode}`),
   getMyOrders: () => api.get<ApiResponse<Order[]>>('/orders/me'),
   updateStatus: (id: string, status: string) => api.patch(`/orders/${id}/status`, { status }),
   cancel: (id: string, reason?: string) => api.patch(`/orders/${id}/cancel`, { reason }),

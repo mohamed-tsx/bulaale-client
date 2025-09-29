@@ -25,6 +25,9 @@ interface CartStore {
   clearCart: () => void;
   getTotalItems: () => number;
   getSubtotal: () => number;
+  getVATAmount: () => number;
+  getVATRate: () => number;
+  getGrandTotal: () => number;
   getItemById: (id: string) => CartItem | undefined;
   isItemInCart: (variantId: string) => boolean;
 }
@@ -92,6 +95,21 @@ export const useCartStore = create<CartStore>()(
       
       getSubtotal: () => {
         return get().items.reduce((total, item) => total + (item.price * item.quantity), 0);
+      },
+
+      getVATRate: () => {
+        return 0.05; // 5% VAT rate for Somalia
+      },
+
+      getVATAmount: () => {
+        const subtotal = get().getSubtotal();
+        return subtotal * get().getVATRate();
+      },
+
+      getGrandTotal: () => {
+        const subtotal = get().getSubtotal();
+        const vatAmount = get().getVATAmount();
+        return subtotal + vatAmount;
       },
 
       getItemById: (id) => {

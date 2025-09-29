@@ -21,7 +21,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { items, updateQuantity, removeItem, getSubtotal, getTotalItems, clearCart } = useCartStore();
+  const { items, updateQuantity, removeItem, getSubtotal, getVATAmount, getVATRate, getGrandTotal, getTotalItems, clearCart } = useCartStore();
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -165,11 +165,21 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         {/* Footer */}
         {items.length > 0 && (
           <div className="border-t border-gray-200 p-4 bg-white">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-lg font-semibold text-gray-900">Total:</span>
-              <span className="text-xl font-bold text-blue-600">
-                ${getSubtotal().toFixed(2)}
-              </span>
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Subtotal:</span>
+                <span className="text-sm font-medium">${getSubtotal().toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">VAT ({(getVATRate() * 100).toFixed(0)}%):</span>
+                <span className="text-sm font-medium">${getVATAmount().toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="text-lg font-semibold text-gray-900">Total:</span>
+                <span className="text-xl font-bold text-blue-600">
+                  ${getGrandTotal().toFixed(2)}
+                </span>
+              </div>
             </div>
             
             <div className="space-y-2">

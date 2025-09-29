@@ -21,7 +21,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 export default function CheckoutPage() {
   const router = useRouter();
   const { handleError, handleSuccess } = useErrorHandler();
-  const { items, getSubtotal, clearCart } = useCartStore();
+  const { items, getSubtotal, getVATAmount, getVATRate, getGrandTotal, clearCart } = useCartStore();
   const { addOrder, setCurrentOrder } = useOrdersStore();
   const { user, isAuthenticated } = useAuthStore();
   
@@ -95,7 +95,7 @@ export default function CheckoutPage() {
       const paymentData = {
         orderId: order.id,
         method: formData.paymentMethod,
-        amount: getSubtotal(),
+        amount: getGrandTotal(), // Use grand total including VAT
         phone: formData.phoneNumber,
       };
 
@@ -111,7 +111,12 @@ export default function CheckoutPage() {
       addOrder(order);
       setCurrentOrder(order);
       clearCart();
-      handleSuccess('Order placed successfully! You will receive a confirmation email shortly.');
+      
+      const successMessage = isAuthenticated 
+        ? 'Order placed successfully! You will receive a confirmation email shortly.'
+        : `Order placed successfully! Your order number is ${order.orderCode}. You can track your order using this number.`;
+      
+      handleSuccess(successMessage);
       router.push(`/order/${order.orderCode}`);
 
     } catch (error) {
@@ -148,6 +153,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-md">
                     <User className="h-4 w-4" />
                     <span>Guest checkout - <Link href="/auth/login" className="underline">Login</Link> to save your order</span>
+                    <span className="text-xs text-gray-500">• You can track your order using the order number</span>
                   </div>
                 )}
               </CardHeader>
@@ -304,7 +310,7 @@ export default function CheckoutPage() {
               className="w-full"
               disabled={isProcessing}
             >
-              {isProcessing ? 'Processing Order...' : `Place Order - $${getSubtotal().toFixed(2)}`}
+              {isProcessing ? 'Processing Order...' : `Place Order - $${getGrandTotal().toFixed(2)}`}
             </Button>
           </form>
         </div>
@@ -359,13 +365,13 @@ export default function CheckoutPage() {
                   <span className="font-medium text-green-600">Free</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="font-medium">$0.00</span>
+                  <span className="text-gray-600">VAT ({(getVATRate() * 100).toFixed(0)}%)</span>
+                  <span className="font-medium">${getVATAmount().toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-lg font-bold text-primary">${getSubtotal().toFixed(2)}</span>
+                  <span className="text-lg font-bold text-primary">${getGrandTotal().toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>

@@ -37,7 +37,7 @@ export default function OrderDetailPage() {
   const fetchOrder = async () => {
     setLoading(true);
     try {
-      const response = await orderApi.getById(orderNo);
+      const response = await orderApi.getByCode(orderNo);
       if (response.data.success) {
         setOrder(response.data.data);
       }
@@ -102,6 +102,44 @@ export default function OrderDetailPage() {
           </Badge>
         </div>
       </div>
+
+      {/* Guest Order Tracking Info */}
+      {!order.user && (
+        <Card className="mb-6 bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Package className="h-4 w-4 text-blue-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Track Your Order
+                </h3>
+                <p className="text-blue-800 mb-3">
+                  You can track your order status using the order number below. Bookmark this page or save the order number for easy access.
+                </p>
+                <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Order Number</p>
+                      <p className="text-xl font-bold text-gray-900">{order.orderCode}</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigator.clipboard.writeText(order.orderCode)}
+                    >
+                      Copy Order Number
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -196,22 +234,26 @@ export default function OrderDetailPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">${order.subtotal.toFixed(2)}</span>
+                <span className="font-medium">${Number(order.subtotal).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">VAT (5%)</span>
+                <span className="font-medium">${Number(order.vatAmount || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Shipping</span>
-                <span className="font-medium">${order.shippingFee.toFixed(2)}</span>
+                <span className="font-medium">${Number(order.shippingFee).toFixed(2)}</span>
               </div>
-              {order.discountTotal > 0 && (
+              {Number(order.discountTotal) > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Discount</span>
-                  <span className="font-medium text-green-600">-${order.discountTotal.toFixed(2)}</span>
+                  <span className="font-medium text-green-600">-${Number(order.discountTotal).toFixed(2)}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between">
                 <span className="text-lg font-semibold text-gray-900">Total</span>
-                <span className="text-lg font-bold text-primary">${order.grandTotal.toFixed(2)}</span>
+                <span className="text-lg font-bold text-primary">${Number(order.grandTotal).toFixed(2)}</span>
               </div>
             </CardContent>
           </Card>
@@ -234,7 +276,7 @@ export default function OrderDetailPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Amount</span>
-                      <span className="text-sm font-medium">${payment.amount.toFixed(2)}</span>
+                      <span className="text-sm font-medium">${Number(payment.amount).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Status</span>

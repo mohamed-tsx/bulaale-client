@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { api, Order } from "@/lib/api";
 import Link from "next/link";
+import OrderStatusTimeline from "@/components/ui/OrderStatusTimeline";
 
 export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -181,7 +182,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-brand-blue">
-                        ${order.grandTotal.toFixed(2)}
+                        ${Number(order.grandTotal).toFixed(2)}
                       </p>
                       <Button
                         variant="outline"
@@ -208,11 +209,11 @@ export default function DashboardPage() {
                             {item.productVariant.product?.name || 'Product'}
                           </h4>
                           <p className="text-xs text-muted-foreground">
-                            Qty: {item.qty} • ${item.unitPrice.toFixed(2)} each
+                            Qty: {item.qty} • ${Number(item.unitPrice).toFixed(2)} each
                           </p>
                         </div>
                         <span className="font-semibold text-sm">
-                          ${(item.unitPrice * item.qty).toFixed(2)}
+                          ${(Number(item.unitPrice) * item.qty).toFixed(2)}
                         </span>
                       </div>
                     ))}
@@ -269,19 +270,14 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Order Status */}
-              <div className="flex items-center space-x-4">
-                <Badge className={getStatusColor(selectedOrder.status)}>
-                  <div className="flex items-center space-x-1">
-                    {getStatusIcon(selectedOrder.status)}
-                    <span>{selectedOrder.status}</span>
-                  </div>
-                </Badge>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-brand-blue">
-                    ${selectedOrder.grandTotal.toFixed(2)}
-                  </p>
-                </div>
+              {/* Order Status Timeline */}
+              <OrderStatusTimeline order={selectedOrder} />
+
+              {/* Order Total */}
+              <div className="text-right">
+                <p className="text-2xl font-bold text-brand-blue">
+                  ${Number(selectedOrder.grandTotal).toFixed(2)}
+                </p>
               </div>
 
               {/* Shipping Address */}
@@ -319,10 +315,10 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${item.unitPrice.toFixed(2)}</p>
+                        <p className="font-semibold">${Number(item.unitPrice).toFixed(2)}</p>
                         <p className="text-sm text-muted-foreground">each</p>
                         <p className="font-bold text-brand-blue">
-                          ${(item.unitPrice * item.qty).toFixed(2)}
+                          ${(Number(item.unitPrice) * item.qty).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -347,7 +343,7 @@ export default function DashboardPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">${payment.amount.toFixed(2)}</p>
+                          <p className="font-semibold">${Number(payment.amount).toFixed(2)}</p>
                           <p className="text-sm text-muted-foreground">
                             {payment.completedAt ? 
                               new Date(payment.completedAt).toLocaleDateString() : 
@@ -367,19 +363,19 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${selectedOrder.subtotal.toFixed(2)}</span>
+                    <span>${Number(selectedOrder.subtotal || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span>${selectedOrder.shippingFee.toFixed(2)}</span>
+                    <span>${Number(selectedOrder.shippingFee).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Discount</span>
-                    <span>-${selectedOrder.discountTotal.toFixed(2)}</span>
+                    <span>-${Number(selectedOrder.discountTotal).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Total</span>
-                    <span className="text-brand-blue">${selectedOrder.grandTotal.toFixed(2)}</span>
+                    <span className="text-brand-blue">${Number(selectedOrder.grandTotal).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
