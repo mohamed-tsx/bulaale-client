@@ -7,23 +7,26 @@ export interface CartItem {
   variantId: string;
   name: string;
   price: number;
-  image?: string;
-  variant?: {
-    size?: string;
-    color?: string;
-    [key: string]: any;
-  };
   quantity: number;
+  image?: string;
+  variant: {
+    color?: string;
+    size?: string;
+    optionSummary?: string;
+    sku?: string;
+  };
 }
 
 interface CartStore {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'quantity'>) => void;
-  removeItem: (variantId: string) => void;
-  setQuantity: (variantId: string, quantity: number) => void;
+  addItem: (item: Omit<CartItem, 'id'>) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getSubtotal: () => number;
+  getItemById: (id: string) => CartItem | undefined;
+  isItemInCart: (variantId: string) => boolean;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -33,37 +36,49 @@ export const useCartStore = create<CartStore>()(
       
       addItem: (item) => {
         const items = get().items;
-        const existingItem = items.find(i => i.variantId === item.variantId);
+        const existingItem = items.find(
+          (i) => i.productId === item.productId && i.variantId === item.variantId
+        );
+        
+        // Ensure price is always a number
+        const normalizedItem = {
+          ...item,
+          price: Number(item.price || 0)
+        };
         
         if (existingItem) {
           set({
-            items: items.map(i =>
-              i.variantId === item.variantId
-                ? { ...i, quantity: i.quantity + 1 }
+            items: items.map((i) =>
+              i.id === existingItem.id
+                ? { ...i, quantity: i.quantity + normalizedItem.quantity }
                 : i
-            )
+            ),
           });
         } else {
-          set({ items: [...items, { ...item, quantity: 1 }] });
+          // Generate unique ID using timestamp and random number to prevent conflicts
+          const uniqueId = `${normalizedItem.productId}-${normalizedItem.variantId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          set({
+            items: [...items, { ...normalizedItem, id: uniqueId }],
+          });
         }
       },
       
-      removeItem: (variantId) => {
-        set({ items: get().items.filter(item => item.variantId !== variantId) });
+      removeItem: (id) => {
+        set({
+          items: get().items.filter((item) => item.id !== id),
+        });
       },
       
-      setQuantity: (variantId, quantity) => {
+      updateQuantity: (id, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(variantId);
+          get().removeItem(id);
           return;
         }
         
         set({
-          items: get().items.map(item =>
-            item.variantId === variantId
-              ? { ...item, quantity }
-              : item
-          )
+          items: get().items.map((item) =>
+            item.id === id ? { ...item, quantity } : item
+          ),
         });
       },
       
@@ -78,9 +93,17 @@ export const useCartStore = create<CartStore>()(
       getSubtotal: () => {
         return get().items.reduce((total, item) => total + (item.price * item.quantity), 0);
       },
+
+      getItemById: (id) => {
+        return get().items.find(item => item.id === id);
+      },
+
+      isItemInCart: (variantId) => {
+        return get().items.some(item => item.variantId === variantId);
+      },
     }),
     {
-      name: 'bulaale-cart',
+      name: 'bulaale-cart-storage',
     }
   )
 );

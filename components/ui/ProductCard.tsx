@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Product, ProductVariant } from '@/lib/api';
 import { getImageUrl } from '@/lib/api';
+import { useErrorHandler } from '@/lib/contexts/error-handler-context';
+import { useWishlistStore } from '@/lib/stores';
 
 interface ProductCardProps {
   product: Product;
@@ -14,13 +15,30 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, variant = 'default' }: ProductCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { handleError, handleSuccess } = useErrorHandler();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
+  const isWishlisted = isInWishlist(product.id);
 
   // Get the first variant as default
   const defaultVariant = product.variants?.[0];
   const minPrice = Math.min(...product.variants.map(v => Number(v.price)));
   const maxPrice = Math.max(...product.variants.map(v => Number(v.price)));
   const hasMultiplePrices = minPrice !== maxPrice;
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      if (isWishlisted) {
+        removeFromWishlist(product.id);
+        handleSuccess(`${product.name} removed from wishlist`);
+      } else {
+        addToWishlist(product.id);
+        handleSuccess(`${product.name} added to wishlist`);
+      }
+    } catch (error) {
+      handleError(error, 'Failed to update wishlist');
+    }
+  };
 
   if (variant === 'minimal') {
     return (
@@ -92,10 +110,7 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
             variant="ghost"
             size="icon"
             className="absolute top-2 right-2 h-8 w-8 bg-white/80 hover:bg-white"
-            onClick={(e) => {
-              e.preventDefault();
-              setIsWishlisted(!isWishlisted);
-            }}
+            onClick={handleWishlistToggle}
           >
             <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
           </Button>

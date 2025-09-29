@@ -12,7 +12,7 @@ import {
   Trash2,
   ArrowRight
 } from "lucide-react";
-import { useCartStore } from "@/lib/stores/cartStore";
+import { useCartStore } from "@/lib/stores/cart-store";
 import Link from "next/link";
 
 interface CartSidebarProps {
@@ -21,7 +21,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { items, updateQuantity, removeItem, getTotalPrice, getTotalItems, clearCart } = useCartStore();
+  const { items, updateQuantity, removeItem, getSubtotal, getTotalItems, clearCart } = useCartStore();
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -81,7 +81,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <Card key={item.variantId} className="bg-gray-50">
+                <Card key={item.id} className="bg-gray-50">
                   <CardContent className="p-4">
                     <div className="flex space-x-3">
                       {/* Product Image */}
@@ -122,7 +122,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                               variant="outline"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => handleQuantityChange(item.variantId, item.quantity - 1)}
+                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
@@ -133,7 +133,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                               variant="outline"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => handleQuantityChange(item.variantId, item.quantity + 1)}
+                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -147,7 +147,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleRemoveItem(item.variantId)}
+                              onClick={() => handleRemoveItem(item.id)}
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
@@ -168,7 +168,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             <div className="flex items-center justify-between mb-4">
               <span className="text-lg font-semibold text-gray-900">Total:</span>
               <span className="text-xl font-bold text-blue-600">
-                ${getTotalPrice().toFixed(2)}
+                ${getSubtotal().toFixed(2)}
               </span>
             </div>
             

@@ -9,7 +9,7 @@ import { useCartStore } from '@/lib/stores/cart-store';
 import { getImageUrl } from '@/lib/api';
 
 export default function CartPage() {
-  const { items, setQuantity, removeItem, getSubtotal, clearCart } = useCartStore();
+  const { items, updateQuantity, removeItem, getSubtotal, clearCart } = useCartStore();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const handleCheckout = () => {
@@ -56,7 +56,7 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.variantId} className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div key={item.id} className="bg-white rounded-2xl border border-gray-200 p-6">
               <div className="flex items-center space-x-4">
                 {/* Product Image */}
                 <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -93,7 +93,7 @@ export default function CartPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => setQuantity(item.variantId, item.quantity - 1)}
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
@@ -104,7 +104,7 @@ export default function CartPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => setQuantity(item.variantId, item.quantity + 1)}
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -115,7 +115,7 @@ export default function CartPage() {
                     variant="ghost"
                     size="icon"
                     className="text-gray-400 hover:text-red-500"
-                    onClick={() => removeItem(item.variantId)}
+                    onClick={() => removeItem(item.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

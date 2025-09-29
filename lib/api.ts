@@ -8,6 +8,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Add auth token to requests
@@ -21,6 +22,28 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle network errors
+    if (!error.response) {
+      error.message = 'Network error. Please check your internet connection.';
+    }
+    
+    // Handle specific HTTP status codes
+    if (error.response?.status === 401) {
+      // Clear auth token on unauthorized
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // Utility function to get full image URL
 export const getImageUrl = (imagePath: string | null | undefined): string => {
@@ -40,7 +63,7 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
-  product: T;
+  data: T;
 }
 
 export interface Product {

@@ -26,20 +26,20 @@ export default function AddToCart({ product, className = '' }: AddToCartProps) {
     setIsAdding(true);
     try {
       // Add multiple items based on quantity
-      for (let i = 0; i < quantity; i++) {
-        addItem({
-          id: product.id,
-          productId: product.id,
-          variantId: selectedVariant.id,
-          name: product.name,
-          price: Number(selectedVariant.price),
-          image: product.coverImageUrl,
-          variant: {
-            size: selectedVariant.size,
-            color: selectedVariant.color,
-          },
-        });
-      }
+      addItem({
+        productId: product.id,
+        variantId: selectedVariant.id,
+        name: product.name,
+        price: Number(selectedVariant.price),
+        quantity: quantity,
+        image: product.coverImageUrl,
+        variant: {
+          size: selectedVariant.size,
+          color: selectedVariant.color,
+          optionSummary: selectedVariant.optionSummary,
+          sku: selectedVariant.sku,
+        },
+      });
     } finally {
       setIsAdding(false);
     }

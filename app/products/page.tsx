@@ -17,16 +17,32 @@ import {
 } from "lucide-react";
 import { api, Product, Category, getImageUrl } from "@/lib/api";
 import Link from "next/link";
+import { useErrorHandler } from "@/lib/contexts/error-handler-context";
+import { ErrorAlert } from "@/components/ui/alert";
+import { useProductsStore } from "@/lib/stores";
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortBy, setSortBy] = useState<string>("name");
+  const { handleError } = useErrorHandler();
+  const {
+    products,
+    categories,
+    isLoading,
+    error,
+    searchQuery,
+    selectedCategory,
+    sortBy,
+    viewMode,
+    setProducts,
+    setCategories,
+    setLoading,
+    setError,
+    setSearchQuery,
+    setSelectedCategory,
+    setSortBy,
+    setViewMode,
+    getFilteredProducts,
+    clearError,
+  } = useProductsStore();
 
   useEffect(() => {
     fetchData();
@@ -35,7 +51,7 @@ export default function ProductsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      setError(null);
+      clearError();
       const [productsRes, categoriesRes] = await Promise.all([
         api.get("/products"),
         api.get("/categories")
@@ -48,7 +64,7 @@ export default function ProductsPage() {
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setError("Failed to load products and categories. Please try again later.");
+      handleError(error, "Failed to load products and categories. Please try again later.");
       setProducts([]);
       setCategories([]);
     } finally {
@@ -56,32 +72,10 @@ export default function ProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || product.category?.id === selectedCategory;
-    return matchesSearch && matchesCategory && product.active;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case "name":
-        return a.name.localeCompare(b.name);
-      case "price-low":
-        const aPrice = a.variants[0]?.price || 0;
-        const bPrice = b.variants[0]?.price || 0;
-        return Number(aPrice) - Number(bPrice);
-      case "price-high":
-        const aPriceHigh = a.variants[0]?.price || 0;
-        const bPriceHigh = b.variants[0]?.price || 0;
-        return Number(bPriceHigh) - Number(aPriceHigh);
-      default:
-        return 0;
-    }
-  });
+  const filteredProducts = getFilteredProducts();
 
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-64">
@@ -95,9 +89,12 @@ export default function ProductsPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-600 mb-4">{error}</div>
-            <Button onClick={fetchData} className="bg-blue-600 hover:bg-blue-700 text-white">
+          <div className="text-center max-w-md">
+            <ErrorAlert 
+              title="Failed to Load Products"
+              description={error}
+            />
+            <Button onClick={fetchData} className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
               Try Again
             </Button>
           </div>
@@ -129,8 +126,8 @@ export default function ProductsPage() {
                 <Input
                   type="text"
                   placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4 py-2 w-full bg-white border-gray-300"
                 />
               </div>
@@ -195,13 +192,13 @@ export default function ProductsPage() {
         {/* Products Grid/List */}
         <div className="mb-4">
           <p className="text-gray-600">
-            Showing {sortedProducts.length} products
+            Showing {filteredProducts.length} products
           </p>
         </div>
 
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedProducts.map((product) => {
+            {filteredProducts.map((product) => {
               const availableVariants = product.variants.filter(
                 variant => variant.active && variant.Inventory && variant.Inventory.quantity > 0
               );
@@ -279,7 +276,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {sortedProducts.map((product) => (
+                {filteredProducts.map((product) => (
               <Card key={product.id} className="group hover:shadow-md transition-all duration-300 bg-white">
                 <div className="flex">
                   <div className="w-32 h-32 bg-gray-100 rounded-l-lg overflow-hidden flex-shrink-0">
@@ -344,7 +341,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {sortedProducts.length === 0 && (
+        {filteredProducts.length === 0 && (
           <div className="text-center py-12">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No products found</h3>

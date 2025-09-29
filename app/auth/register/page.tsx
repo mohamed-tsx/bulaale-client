@@ -9,9 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { authApi } from '@/lib/api';
+import { useErrorHandler } from '@/lib/contexts/error-handler-context';
+import { useAuthStore } from '@/lib/stores';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { handleError, handleSuccess } = useErrorHandler();
+  const { login, setLoading, isLoading } = useAuthStore();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,24 +24,21 @@ export default function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    setLoading(true);
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
+      handleError('Passwords do not match');
+      setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setIsLoading(false);
+      handleError('Password must be at least 6 characters long');
+      setLoading(false);
       return;
     }
 
@@ -49,19 +50,20 @@ export default function RegisterPage() {
       });
       
       if (response.data.success) {
-        // Store token
-        localStorage.setItem('auth-token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        // Store token and user data using auth store
+        login(response.data.data.user, response.data.data.token);
+        
+        handleSuccess('Account created successfully! Welcome to Bulaale Baby Care.');
         
         // Redirect to home
         router.push('/');
       } else {
-        setError(response.data.message || 'Registration failed');
+        handleError(response.data.message || 'Registration failed');
       }
     } catch (error: any) {
-      setError(error.response?.data?.message || 'Registration failed. Please try again.');
+      handleError(error, 'Registration failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -97,12 +99,6 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
-
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="name">Full Name</Label>

@@ -13,10 +13,14 @@ import { Separator } from '@/components/ui/separator';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { orderApi, paymentApi } from '@/lib/api';
 import { getImageUrl } from '@/lib/api';
+import { useErrorHandler } from '@/lib/contexts/error-handler-context';
+import { useOrdersStore } from '@/lib/stores';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { handleError, handleSuccess } = useErrorHandler();
   const { items, getSubtotal, clearCart } = useCartStore();
+  const { addOrder, setCurrentOrder } = useOrdersStore();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -99,13 +103,16 @@ export default function CheckoutPage() {
 
       const payment = paymentResponse.data.data;
 
-      // Clear cart and redirect
+      // Add order to store and clear cart
+      addOrder(order);
+      setCurrentOrder(order);
       clearCart();
+      handleSuccess('Order placed successfully! You will receive a confirmation email shortly.');
       router.push(`/order/${order.orderCode}`);
 
     } catch (error) {
       console.error('Checkout error:', error);
-      alert(`Checkout failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      handleError(error, 'Checkout failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }

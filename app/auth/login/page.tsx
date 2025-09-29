@@ -9,39 +9,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { authApi } from '@/lib/api';
+import { useErrorHandler } from '@/lib/contexts/error-handler-context';
+import { useAuthStore } from '@/lib/stores';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { handleError, handleSuccess } = useErrorHandler();
+  const { login, setLoading, isLoading } = useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    setLoading(true);
 
     try {
       const response = await authApi.login(formData);
       
       if (response.data.success) {
-        // Store token
-        localStorage.setItem('auth-token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        // Store token and user data using auth store
+        login(response.data.data.user, response.data.data.token);
+        
+        handleSuccess('Welcome back! You have been successfully logged in.');
         
         // Redirect to home or intended page
         router.push('/');
       } else {
-        setError(response.data.message || 'Login failed');
+        handleError(response.data.message || 'Login failed');
       }
     } catch (error: any) {
-      setError(error.response?.data?.message || 'Login failed. Please try again.');
+      handleError(error, 'Login failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -77,12 +79,6 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
-
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email address</Label>
