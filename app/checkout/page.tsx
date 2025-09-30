@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CreditCard, MapPin, User, Phone, Mail } from 'lucide-react';
+import { CreditCard, MapPin, User, Phone, Mail, Copy, ExternalLink, Package, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { orderApi, paymentApi } from '@/lib/api';
+import { Order } from '@/lib/api';
 import { getImageUrl } from '@/lib/api';
 import { useErrorHandler } from '@/lib/contexts/error-handler-context';
 import { useOrdersStore } from '@/lib/stores';
@@ -26,6 +27,8 @@ export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuthStore();
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   
   // Form state
@@ -56,6 +59,18 @@ export default function CheckoutPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const copyOrderNumber = async () => {
+    if (placedOrder?.orderCode) {
+      try {
+        await navigator.clipboard.writeText(placedOrder.orderCode);
+        handleSuccess('Order number copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+        handleError(err, 'Failed to copy order number');
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,12 +127,15 @@ export default function CheckoutPage() {
       setCurrentOrder(order);
       clearCart();
       
+      // Show order confirmation instead of redirecting
+      setPlacedOrder(order);
+      setOrderPlaced(true);
+      
       const successMessage = isAuthenticated 
         ? 'Order placed successfully! You will receive a confirmation email shortly.'
         : `Order placed successfully! Your order number is ${order.orderCode}. You can track your order using this number.`;
       
       handleSuccess(successMessage);
-      router.push(`/order/${order.orderCode}`);
 
     } catch (error) {
       console.error('Checkout error:', error);
@@ -129,6 +147,135 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return null; // Will redirect to cart
+  }
+
+  // Show order confirmation if order was placed
+  if (orderPlaced && placedOrder) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Success Header */}
+        <div className="text-center mb-8">
+          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Placed Successfully!</h1>
+          <p className="text-gray-600">
+            {isAuthenticated 
+              ? 'You will receive a confirmation email shortly.'
+              : 'You can track your order using the order number below.'
+            }
+          </p>
+        </div>
+
+        {/* Order Details Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Order Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Order Number - Prominently Displayed */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-900">Order Number</h3>
+                  <p className="text-2xl font-bold text-blue-600 font-mono">{placedOrder.orderCode}</p>
+                </div>
+                <Button 
+                  onClick={copyOrderNumber}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Order Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">${Number(placedOrder.subtotal).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">VAT (5%)</span>
+                    <span className="font-medium">${Number(placedOrder.vatAmount || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="font-medium">${Number(placedOrder.shippingFee).toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span className="text-blue-600">${Number(placedOrder.grandTotal).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Order Status</h4>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <span className="text-sm font-medium">Pending</span>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Your order has been placed and is being reviewed.
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+              <Button 
+                onClick={() => router.push(`/order/${placedOrder.orderCode}`)}
+                className="flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Order Details
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => router.push('/track')}
+                className="flex items-center gap-2"
+              >
+                <Package className="h-4 w-4" />
+                Track Another Order
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => router.push('/shop')}
+                className="flex items-center gap-2"
+              >
+                Continue Shopping
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Guest User Instructions */}
+        {!isAuthenticated && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-6">
+              <h3 className="font-semibold text-blue-900 mb-2">Important for Guest Users</h3>
+              <div className="text-sm text-blue-800 space-y-2">
+                <p>• Save your order number: <strong>{placedOrder.orderCode}</strong></p>
+                <p>• You can track your order anytime using this number</p>
+                <p>• No account needed - just visit the Track Order page</p>
+                <p>• Contact customer service if you need assistance</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
   }
 
   return (
