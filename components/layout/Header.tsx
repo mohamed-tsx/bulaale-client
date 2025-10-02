@@ -1,7 +1,17 @@
+"use client"
+
 import { ShoppingCart, Menu, Search, Heart, User } from "lucide-react"
 import Image from "next/image"
+import { useCartStore } from "@/lib/stores/cart-store"
 
-export default function Header() {
+interface HeaderProps {
+  onCartClick?: () => void;
+}
+
+export default function Header({ onCartClick }: HeaderProps) {
+  const { getTotalItems } = useCartStore()
+  const totalItems = getTotalItems()
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
@@ -9,22 +19,19 @@ export default function Header() {
           <button className="lg:hidden">
             <Menu className="h-6 w-6" />
           </button>
-          <Image src="/logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
+          <Image src="/Logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
           <nav className="hidden lg:flex items-center gap-6">
-            <a href="#" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+            <a href="/products" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
               All Products
             </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Clothing
+            <a href="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Categories
             </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Shoes
+            <a href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              About
             </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Baby Care
-            </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Sale
+            <a href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Contact
             </a>
           </nav>
         </div>
@@ -43,11 +50,17 @@ export default function Header() {
           <button className="hidden md:block">
             <User className="h-5 w-5 text-foreground hover:text-accent transition-colors" />
           </button>
-          <button className="relative">
+          <button 
+            className="relative hover:bg-accent/10 p-2 rounded-lg transition-colors"
+            onClick={onCartClick}
+            aria-label="Shopping cart"
+          >
             <ShoppingCart className="h-5 w-5 text-foreground" />
-            <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-accent text-[11px] font-semibold text-accent-foreground flex items-center justify-center">
-              0
-            </span>
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-orange-500 text-[11px] font-semibold text-white flex items-center justify-center animate-pulse">
+                {totalItems > 99 ? '99+' : totalItems}
+              </span>
+            )}
           </button>
         </div>
       </div>

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+import ClientLayout from '@/components/layout/ClientLayout';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorHandlerProvider } from '@/lib/contexts/error-handler-context';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -31,13 +30,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={poppins.className}>
         <ErrorHandlerProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
           <Toaster />
         </ErrorHandlerProvider>
       </body>
