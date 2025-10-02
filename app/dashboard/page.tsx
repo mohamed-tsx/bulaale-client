@@ -33,6 +33,22 @@ export default function DashboardPage() {
     fetchOrders();
   }, []);
 
+  // Poll for order updates if there are pending orders
+  useEffect(() => {
+    const hasPendingOrders = orders.some(order => 
+      order.status === 'PENDING' || 
+      order.payments.some(payment => payment.status === 'PENDING' || payment.status === 'INITIATED')
+    );
+
+    if (!hasPendingOrders) return;
+
+    const pollInterval = setInterval(() => {
+      fetchOrders(); // Refresh orders to get updated statuses
+    }, 15000); // Poll every 15 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [orders]);
+
   const fetchOrders = async () => {
     try {
       setLoading(true);

@@ -1,15 +1,14 @@
 import { ShoppingCart, Menu, Search, Heart, User } from "lucide-react"
-import Image from "next/image"
 
-export default function Header() {
+export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-6 lg:gap-8">
           <button className="lg:hidden">
             <Menu className="h-6 w-6" />
           </button>
-          <Image src="/logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">BabyNest</h1>
           <nav className="hidden lg:flex items-center gap-6">
             <a href="#" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
               All Products

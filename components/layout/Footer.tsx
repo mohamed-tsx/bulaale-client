@@ -31,7 +31,7 @@ export default function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Image src="/logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
+              <Image src="/Logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
             </div>
             <p className="text-gray-300 text-sm">
               Premium baby care products for your little ones. Quality, safety, and comfort you can trust.

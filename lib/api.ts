@@ -63,7 +63,7 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
-  data: T;
+  product: T;
 }
 
 export interface Product {

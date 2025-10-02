@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { orderApi, Order, getImageUrl } from '@/lib/api';
 import OrderStatusTimeline from '@/components/ui/OrderStatusTimeline';
+import { useToast } from '@/hooks/use-toast';
 
 const statusConfig = {
   PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
@@ -24,9 +25,11 @@ const statusConfig = {
 export default function OrderDetailPage() {
   const params = useParams();
   const orderNo = params.orderNo as string;
+  const { toast } = useToast();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [previousPaymentStatuses, setPreviousPaymentStatuses] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (orderNo) {
@@ -34,12 +37,53 @@ export default function OrderDetailPage() {
     }
   }, [orderNo]);
 
+  // Poll payment status if order has pending payments
+  useEffect(() => {
+    if (!order || !order.payments.length) return;
+
+    const hasPendingPayment = order.payments.some(payment => 
+      payment.status === 'PENDING' || payment.status === 'INITIATED'
+    );
+
+    if (!hasPendingPayment) return;
+
+    const pollInterval = setInterval(() => {
+      fetchOrder(); // Refresh order data to get updated payment status
+    }, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [order]);
+
   const fetchOrder = async () => {
     setLoading(true);
     try {
       const response = await orderApi.getByCode(orderNo);
       if (response.data.success) {
-        setOrder(response.data.data);
+        const newOrder = response.data.data;
+        
+        // Check for payment status changes
+        if (order && newOrder.payments) {
+          newOrder.payments.forEach((payment) => {
+            const previousStatus = previousPaymentStatuses[payment.id];
+            if (previousStatus && previousStatus !== payment.status) {
+              // Payment status changed
+              toast({
+                title: "Payment Status Updated",
+                description: `Payment ${payment.method} status changed from ${previousStatus} to ${payment.status}`,
+                variant: payment.status === 'COMPLETED' ? 'default' : 'destructive'
+              });
+            }
+          });
+          
+          // Update previous statuses
+          const newStatuses: Record<string, string> = {};
+          newOrder.payments.forEach((payment) => {
+            newStatuses[payment.id] = payment.status;
+          });
+          setPreviousPaymentStatuses(newStatuses);
+        }
+        
+        setOrder(newOrder);
       }
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -280,9 +324,23 @@ export default function OrderDetailPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Status</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {payment.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant="secondary" 
+                          className={`text-xs ${
+                            payment.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                            payment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                            payment.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                            payment.status === 'CANCELLED' ? 'bg-gray-100 text-gray-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {payment.status}
+                        </Badge>
+                        {(payment.status === 'PENDING' || payment.status === 'INITIATED') && (
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Payment status is being updated automatically" />
+                        )}
+                      </div>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Date</span>
