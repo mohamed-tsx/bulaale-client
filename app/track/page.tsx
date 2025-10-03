@@ -20,7 +20,7 @@ export default function TrackOrderPage() {
     e.preventDefault();
     
     if (!orderCode.trim()) {
-      handleError(new Error('Please enter an order number'), 'Order number is required');
+      handleError(new Error('Please enter a tracking number'), 'Tracking number is required');
       return;
     }
 
@@ -30,11 +30,11 @@ export default function TrackOrderPage() {
       if (response.data.success) {
         router.push(`/order/${orderCode.trim()}`);
       } else {
-        handleError(new Error('Order not found'), 'Order not found. Please check your order number.');
+        handleError(new Error('Order not found'), 'Order not found. Please check your tracking number.');
       }
     } catch (error) {
       console.error('Error tracking order:', error);
-      handleError(error, 'Order not found. Please check your order number.');
+      handleError(error, 'Order not found. Please check your tracking number.');
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +48,7 @@ export default function TrackOrderPage() {
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Track Your Order</h1>
         <p className="text-gray-600">
-          Enter your order number to check the status of your order
+          Enter your tracking number to check the status of your order
         </p>
       </div>
 
@@ -62,18 +62,18 @@ export default function TrackOrderPage() {
         <CardContent>
           <form onSubmit={handleTrackOrder} className="space-y-4">
             <div>
-              <Label htmlFor="orderCode">Order Number</Label>
+              <Label htmlFor="orderCode">Tracking Number</Label>
               <Input
                 id="orderCode"
                 type="text"
-                placeholder="e.g., ORD-2025-000123"
+                placeholder="e.g., TRK-20250103144926-0001-RAC9578O"
                 value={orderCode}
                 onChange={(e) => setOrderCode(e.target.value)}
-                className="mt-1"
+                className="mt-1 font-mono text-sm"
                 required
               />
               <p className="text-sm text-gray-500 mt-1">
-                You can find your order number in your confirmation email or receipt
+                You can find your tracking number in your confirmation email or receipt
               </p>
             </div>
             

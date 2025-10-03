@@ -58,7 +58,7 @@ export default function OrderDetailPage() {
     setLoading(true);
     try {
       const response = await orderApi.getByCode(orderNo);
-      if (response.data.success) {
+      if (response.data.success) {  
         const newOrder = response.data.data;
         
         // Check for payment status changes
@@ -135,10 +135,13 @@ export default function OrderDetailPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Order #{order.orderCode}</h1>
-          <p className="text-gray-600">
-            Placed on {new Date(order.createdAt).toLocaleDateString()}
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Order Details</h1>
+          <div className="mt-2">
+            <p className="text-lg font-mono text-gray-800">#{order.orderCode}</p>
+            <p className="text-gray-600">
+              Placed on {new Date(order.createdAt).toLocaleDateString()}
+            </p>
+          </div>
         </div>
         <div className="ml-auto">
           <Badge className={statusConfig[order.status].color}>

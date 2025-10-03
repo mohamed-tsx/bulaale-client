@@ -63,7 +63,26 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
+  data: T;
+}
+
+// Specific response types for different endpoints
+export interface ProductApiResponse<T> {
+  success: boolean;
+  message?: string;
   product: T;
+}
+
+export interface OrderApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+export interface PaymentApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
 }
 
 export interface Product {
@@ -262,19 +281,19 @@ export const categoryApi = {
 };
 
 export const orderApi = {
-  create: (data: any) => api.post<ApiResponse<Order>>('/orders', data),
-  getAll: (params?: any) => api.get<ApiResponse<{orders: Order[], pagination: any}>>('/orders', { params }),
-  getById: (id: string) => api.get<ApiResponse<Order>>(`/orders/${id}`),
-  getByCode: (orderCode: string) => api.get<ApiResponse<Order>>(`/orders/track/${orderCode}`),
-  getMyOrders: () => api.get<ApiResponse<Order[]>>('/orders/me'),
+  create: (data: any) => api.post<OrderApiResponse<Order>>('/orders', data),
+  getAll: (params?: any) => api.get<OrderApiResponse<{orders: Order[], pagination: any}>>('/orders', { params }),
+  getById: (id: string) => api.get<OrderApiResponse<Order>>(`/orders/${id}`),
+  getByCode: (orderCode: string) => api.get<OrderApiResponse<Order>>(`/orders/track/${orderCode}`),
+  getMyOrders: () => api.get<OrderApiResponse<Order[]>>('/orders/me'),
   updateStatus: (id: string, status: string) => api.patch(`/orders/${id}/status`, { status }),
   cancel: (id: string, reason?: string) => api.patch(`/orders/${id}/cancel`, { reason }),
 };
 
 export const paymentApi = {
-  create: (data: any) => api.post<ApiResponse<Payment>>('/payments', data),
-  getById: (id: string) => api.get<ApiResponse<Payment>>(`/payments/${id}`),
-  pay: (id: string, data: any) => api.post<ApiResponse<any>>(`/payments/${id}/pay`, data),
+  create: (data: any) => api.post<PaymentApiResponse<Payment>>('/payments', data),
+  getById: (id: string) => api.get<PaymentApiResponse<Payment>>(`/payments/${id}`),
+  pay: (id: string, data: any) => api.post<PaymentApiResponse<any>>(`/payments/${id}/pay`, data),
   updateStatus: (id: string, status: string, data?: any) => api.patch(`/payments/${id}/status`, { status, ...data }),
 };
 

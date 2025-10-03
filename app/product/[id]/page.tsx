@@ -112,8 +112,8 @@ export default function ProductDetailPage() {
         }
 
         const response = await productApi.getById(id as string)
-        if (response?.data?.success && response?.data?.product) {
-          const productData = response.data.product as Product
+        if (response?.data?.success && response?.data?.data) {
+          const productData = response.data.data as Product
           setProduct(productData)
 
           if (productData.variants?.length) {
