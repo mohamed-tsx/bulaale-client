@@ -260,10 +260,10 @@ export const productApi = {
     };
   }>('/products', { params }),
   
-  getById: (id: string) => api.get<ApiResponse<Product>>(`/products/${id}`),
-  getBySlug: (slug: string) => api.get<ApiResponse<Product>>(`/products/slug/${slug}`),
-  getFeatured: () => api.get<ApiResponse<Product[]>>('/products/featured'),
-  getByCategory: (categoryId: string) => api.get<ApiResponse<Product[]>>(`/products?categoryId=${categoryId}`),
+  getById: (id: string) => api.get<ProductApiResponse<Product>>(`/products/${id}`),
+  getBySlug: (slug: string) => api.get<ProductApiResponse<Product>>(`/products/slug/${slug}`),
+  getFeatured: () => api.get<ProductApiResponse<Product[]>>('/products/featured'),
+  getByCategory: (categoryId: string) => api.get<ProductApiResponse<Product[]>>(`/products?categoryId=${categoryId}`),
 };
 
 export const categoryApi = {

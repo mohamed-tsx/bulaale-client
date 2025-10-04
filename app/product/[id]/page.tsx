@@ -112,8 +112,8 @@ export default function ProductDetailPage() {
         }
 
         const response = await productApi.getById(id as string)
-        if (response?.data?.success && response?.data?.data) {
-          const productData = response.data.data as Product
+        if (response?.data?.success && response?.data?.product) {
+          const productData = response.data.product
           setProduct(productData)
 
           if (productData.variants?.length) {
@@ -286,6 +286,8 @@ export default function ProductDetailPage() {
     )
   }
 
+  console.log(product);
+  
   if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
