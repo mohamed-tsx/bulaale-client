@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Category } from "@/lib/api"
 import { categoryApi } from "@/lib/api"
+import CategoryImage from "@/components/ui/CategoryImage"
 
 export function CategoryGrid() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -97,8 +98,8 @@ export function CategoryGrid() {
                 className="group overflow-hidden border rounded-lg hover:shadow-md transition-all duration-300 cursor-pointer bg-card block"
               >
                 <div className="relative aspect-square overflow-hidden bg-muted">
-                  <img
-                    src="/placeholder-image.svg"
+                  <CategoryImage
+                    imageUrl={category.imageUrl}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
