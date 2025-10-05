@@ -114,6 +114,13 @@ export default function ProductDetailPage() {
         const response = await productApi.getById(id as string)
         if (response?.data?.success && response?.data?.product) {
           const productData = response.data.product
+          
+          // Check if product is active
+          if (!productData.active) {
+            setError("This product is no longer available")
+            return
+          }
+          
           setProduct(productData)
 
           if (productData.variants?.length) {

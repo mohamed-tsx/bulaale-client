@@ -20,16 +20,18 @@ export function FeaturedProducts() {
         // Try to get featured products first, fallback to regular products
         try {
           const response = await productApi.getFeatured()
-          if (response.data.success && response.data.data) {
-            setProducts(response.data.data.slice(0, 5)) // Limit to 5 products
+          if (response.data.success && response.data.product) {
+            setProducts(response.data.product.slice(0, 5)) // Limit to 5 products
           } else {
             throw new Error('No featured products found')
           }
         } catch (featuredError) {
           // Fallback to getting regular products
-          const response = await productApi.getAll({ limit: 5 })
+          const response = await productApi.getAll({ limit: 5, active: true })
           const productsData = response.data?.success ? response.data.products : response.data.products || []
-          setProducts(productsData.slice(0, 5))
+          // Filter out inactive products as additional safety
+          const activeProducts = productsData.filter(product => product.active)
+          setProducts(activeProducts.slice(0, 5))
         }
       } catch (err) {
         console.error('Error fetching featured products:', err)

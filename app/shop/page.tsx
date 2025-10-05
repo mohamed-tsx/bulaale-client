@@ -45,6 +45,7 @@ export default function ShopPage() {
       const params: any = {
         page: currentPage,
         limit: 12,
+        active: true,
       };
 
       if (filters.search) params.q = filters.search;

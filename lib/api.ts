@@ -245,6 +245,7 @@ export const productApi = {
     page?: number;
     limit?: number;
     sort?: string;
+    active?: boolean;
   }) => api.get<{
     success: boolean;
     message: string;
@@ -255,12 +256,17 @@ export const productApi = {
       total: number;
       pages: number;
     };
-  }>('/products', { params }),
+  }>('/products', { 
+    params: { 
+      ...params, 
+      active: params?.active !== false ? true : false 
+    } 
+  }),
   
   getById: (id: string) => api.get<ProductApiResponse<Product>>(`/products/${id}`),
   getBySlug: (slug: string) => api.get<ProductApiResponse<Product>>(`/products/slug/${slug}`),
   getFeatured: () => api.get<ProductApiResponse<Product[]>>('/products/featured'),
-  getByCategory: (categoryId: string) => api.get<ProductApiResponse<Product[]>>(`/products?categoryId=${categoryId}`),
+  getByCategory: (categoryId: string) => api.get<ProductApiResponse<Product[]>>(`/products?categoryId=${categoryId}&active=true`),
 };
 
 export const categoryApi = {

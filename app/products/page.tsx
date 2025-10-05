@@ -53,14 +53,16 @@ export default function ProductsPage() {
       setLoading(true);
       clearError();
       const [productsRes, categoriesRes] = await Promise.all([
-        api.get("/products"),
+        api.get("/products?active=true"),
         api.get("/categories")
       ]);
       
       const productsData = productsRes.data?.success ? productsRes.data.products : productsRes.data.products || productsRes.data || [];
       const categoriesData = categoriesRes.data?.success ? categoriesRes.data.categories : categoriesRes.data.categories || categoriesRes.data || [];
       
-      setProducts(Array.isArray(productsData) ? productsData : []);
+      // Filter out inactive products as additional safety
+      const activeProducts = Array.isArray(productsData) ? productsData.filter(product => product.active) : [];
+      setProducts(activeProducts);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error("Error fetching data:", error);

@@ -97,6 +97,13 @@ export default function ProductDetailPage() {
       if (response.data.success) {
         const productData = response.data.product;
         console.log(productData);
+        
+        // Check if product is active
+        if (!productData.active) {
+          setError("This product is no longer available");
+          return;
+        }
+        
         setProduct(productData);
         
         // Auto-select first available variant
