@@ -90,11 +90,9 @@ export interface Product {
   name: string;
   categoryId: string;
   description?: string;
-  brand?: string;
   ageMinMonths?: number;
   ageMaxMonths?: number;
   careNotes?: string;
-  countryOfOrigin?: string;
   active: boolean;
   coverImageUrl?: string;
   variants: ProductVariant[];
@@ -202,13 +200,12 @@ export interface OrderItem {
     optionSummary?: string;
     price: string;
     active: boolean;
-    product: {
-      id: string;
-      name: string;
-      description?: string;
-      brand?: string;
-      coverImageUrl?: string;
-    };
+      product: {
+        id: string;
+        name: string;
+        description?: string;
+        coverImageUrl?: string;
+      };
   };
   createdAt: string;
 }

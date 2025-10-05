@@ -369,11 +369,6 @@ export default function ProductDetailPage() {
             {/* Header */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                {product.brand && (
-                  <Badge variant="outline" className="text-xs">
-                    {product.brand}
-                  </Badge>
-                )}
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="w-3 h-3 text-yellow-400 fill-current">
@@ -732,10 +727,10 @@ export default function ProductDetailPage() {
                   </div>
                 )}
                 
-                {product.countryOfOrigin && (
+                {product.careNotes && (
                   <div className="p-4 bg-muted/50 rounded-lg border">
-                    <h4 className="text-sm font-medium text-foreground mb-2">Country of Origin</h4>
-                    <p className="text-sm text-muted-foreground">{product.countryOfOrigin}</p>
+                    <h4 className="text-sm font-medium text-foreground mb-2">Care Notes</h4>
+                    <p className="text-sm text-muted-foreground">{product.careNotes}</p>
                   </div>
                 )}
               </div>
@@ -747,12 +742,6 @@ export default function ProductDetailPage() {
                   <span className="text-sm font-medium text-foreground">Product ID</span>
                   <span className="text-sm text-muted-foreground font-mono">{product.id}</span>
                 </div>
-                {product.brand && (
-                  <div className="flex justify-between items-center py-3 border-b">
-                    <span className="text-sm font-medium text-foreground">Brand</span>
-                    <span className="text-sm text-muted-foreground">{product.brand}</span>
-                  </div>
-                )}
                 {product.category && (
                   <div className="flex justify-between items-center py-3 border-b">
                     <span className="text-sm font-medium text-foreground">Category</span>
@@ -765,12 +754,6 @@ export default function ProductDetailPage() {
                     <span className="text-sm text-muted-foreground">
                       {product.ageMinMonths} - {product.ageMaxMonths} months
                     </span>
-                  </div>
-                )}
-                {product.countryOfOrigin && (
-                  <div className="flex justify-between items-center py-3 border-b">
-                    <span className="text-sm font-medium text-foreground">Country of Origin</span>
-                    <span className="text-sm text-muted-foreground">{product.countryOfOrigin}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center py-3">

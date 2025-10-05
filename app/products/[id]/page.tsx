@@ -28,7 +28,7 @@ import {
   Share2,
 } from "lucide-react";
 import VariantSelector from "@/components/VariantSelector";
-import { useCartStore } from "@/lib/stores/cartStore";
+import { useCartStore } from "@/lib/stores/cart-store";
 import { api } from "@/lib/api";
 
 interface ProductVariant {
@@ -46,11 +46,9 @@ interface Product {
   id: string;
   name: string;
   description?: string;
-  brand?: string;
   ageMinMonths?: number;
   ageMaxMonths?: number;
   careNotes?: string;
-  countryOfOrigin?: string;
   active: boolean;
   coverImageUrl?: string;
   category?: {
@@ -431,11 +429,9 @@ export default function ProductDetailPage() {
               {/* Product Details */}
               <div className="space-y-2 text-sm text-gray-600">
                 <p><strong>SKU:</strong> {selectedVariant?.sku || availableVariants[0]?.sku}</p>
-                <p><strong>Brand:</strong> {product.brand || 'Bulaale Baby Care'}</p>
                 <p><strong>Age Range:</strong> {product.ageMinMonths && product.ageMaxMonths ? 
                   `${product.ageMinMonths}-${product.ageMaxMonths} months` : 'All ages'}</p>
-                <p><strong>Country of Origin:</strong> {product.countryOfOrigin || 'Somalia'}</p>
-                <p><strong>Tags:</strong> {product.category?.name}, {product.brand || 'Baby Care'}, Fashion</p>
+                <p><strong>Tags:</strong> {product.category?.name}, Baby Care, Fashion</p>
               </div>
 
               {/* Share Options */}
@@ -551,11 +547,9 @@ export default function ProductDetailPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Information</h3>
                 <div className="text-gray-600 space-y-2">
                   <p><strong>Product Name:</strong> {product.name}</p>
-                  <p><strong>Brand:</strong> {product.brand || 'Bulaale Baby Care'}</p>
                   <p><strong>Category:</strong> {product.category?.name}</p>
                   <p><strong>Age Range:</strong> {product.ageMinMonths && product.ageMaxMonths ? 
                     `${product.ageMinMonths}-${product.ageMaxMonths} months` : 'All ages'}</p>
-                  <p><strong>Country of Origin:</strong> {product.countryOfOrigin || 'Somalia'}</p>
                   <p><strong>Product ID:</strong> {product.id}</p>
                   {product.careNotes && (
                     <p><strong>Care Notes:</strong> {product.careNotes}</p>
