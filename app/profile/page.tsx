@@ -63,7 +63,6 @@ export default function ProfilePage() {
   const handleSave = async () => {
     try {
       // Here you would typically call an API to update user profile
-      console.log('Saving profile:', formData);
       setIsEditing(false);
       // Show success message
     } catch (error) {

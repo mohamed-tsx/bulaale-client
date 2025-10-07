@@ -158,7 +158,7 @@ export interface Order {
   vatRate?: string | number; // Can be string from API or number - updated for currency formatting
   shippingFee: string | number; // Can be string from API or number - updated for currency formatting
   discountTotal: string | number; // Can be string from API or number - updated for currency formatting
-  grandTotal: string | number; // Can be string from API or number - updated for currency formatting
+  grandTotal: number; // Can be string from API or number - updated for currency formatting
   shippingAddressId?: string;
   notes?: string;
   items: OrderItem[];
