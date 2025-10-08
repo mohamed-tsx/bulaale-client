@@ -293,6 +293,7 @@ export const orderApi = {
   getMyOrders: () => api.get<ApiResponse<Order[]>>('/orders/me'),
   updateStatus: (id: string, status: string) => api.patch(`/orders/${id}/status`, { status }),
   cancel: (id: string, reason?: string) => api.patch(`/orders/${id}/cancel`, { reason }),
+  cancelMyOrder: (id: string, reason?: string) => api.patch(`/orders/me/${id}/cancel`, { reason }),
 };
 
 export const paymentApi = {

@@ -2,11 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Package, Eye, Calendar, DollarSign } from 'lucide-react';
+import { Package, Eye, Calendar, DollarSign, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { orderApi, Order, getImageUrl } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const statusConfig = {
   PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
@@ -21,6 +35,9 @@ const statusConfig = {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchOrders();
@@ -38,6 +55,38 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      setCancellingOrderId(orderId);
+      const response = await orderApi.cancelMyOrder(orderId, cancelReason);
+      
+      if (response.data.success) {
+        toast({
+          title: "Order cancelled",
+          description: "Your order has been cancelled successfully.",
+        });
+        
+        // Refresh orders list
+        await fetchOrders();
+        setCancelReason('');
+      }
+    } catch (error: any) {
+      console.error('Error cancelling order:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel order';
+      toast({
+        title: "Cancellation failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
+  const canCancelOrder = (order: Order) => {
+    return order.status === 'PENDING';
   };
 
   if (loading) {
@@ -112,6 +161,46 @@ export default function OrdersPage() {
                       View Details
                     </Link>
                   </Button>
+                  {canCancelOrder(order) && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <X className="h-4 w-4 mr-2" />
+                          Cancel Order
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Order #{order.orderCode}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel this order? This action cannot be undone.
+                            You can only cancel orders that are still pending.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="cancel-reason">Reason for cancellation (optional)</Label>
+                            <Input
+                              id="cancel-reason"
+                              placeholder="Enter reason for cancellation..."
+                              value={cancelReason}
+                              onChange={(e) => setCancelReason(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleCancelOrder(order.id)}
+                            disabled={cancellingOrderId === order.id}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            {cancellingOrderId === order.id ? 'Cancelling...' : 'Cancel Order'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </div>
             </CardHeader>

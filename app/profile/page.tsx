@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, MapPin, Package, Edit, Save, X } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Package, Edit, Save, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { authApi, orderApi, Order } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -19,6 +30,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,6 +74,38 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error fetching orders:', error);
     }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      setCancellingOrderId(orderId);
+      const response = await orderApi.cancelMyOrder(orderId, cancelReason);
+      
+      if (response.data.success) {
+        toast({
+          title: "Order cancelled",
+          description: "Your order has been cancelled successfully.",
+        });
+        
+        // Refresh orders list
+        await fetchOrders();
+        setCancelReason('');
+      }
+    } catch (error: any) {
+      console.error('Error cancelling order:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel order';
+      toast({
+        title: "Cancellation failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
+  const canCancelOrder = (order: Order) => {
+    return order.status === 'PENDING';
   };
 
   const handleSave = async () => {
@@ -267,6 +312,45 @@ export default function ProfilePage() {
                         <Button variant="outline" size="sm" asChild>
                           <a href={`/order/${order.orderCode}`}>View</a>
                         </Button>
+                        {canCancelOrder(order) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">
+                                <X className="h-4 w-4 mr-1" />
+                                Cancel
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Cancel Order #{order.orderCode}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to cancel this order? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="cancel-reason-profile">Reason for cancellation (optional)</Label>
+                                  <Input
+                                    id="cancel-reason-profile"
+                                    placeholder="Enter reason for cancellation..."
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  disabled={cancellingOrderId === order.id}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {cancellingOrderId === order.id ? 'Cancelling...' : 'Cancel Order'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </div>
                   ))}
