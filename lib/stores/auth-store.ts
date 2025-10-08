@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { AuthApiResponse } from '../api';
 
 export interface User {
   id: string;
@@ -13,27 +14,25 @@ export interface User {
 
 interface AuthStore {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
   setLoading: (loading: boolean) => void;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
       isLoading: false,
 
-      login: (user, token) => {
+      login: (user) => {
         set({
           user,
-          token,
           isAuthenticated: true,
           isLoading: false,
         });
@@ -42,14 +41,12 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         set({
           user: null,
-          token: null,
           isAuthenticated: false,
           isLoading: false,
         });
         // Clear localStorage
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user');
+          localStorage.removeItem('bulaale-auth-storage');
         }
       },
 
@@ -65,12 +62,41 @@ export const useAuthStore = create<AuthStore>()(
       setLoading: (loading) => {
         set({ isLoading: loading });
       },
+
+      checkAuth: async () => {
+        set({ isLoading: true });
+        try {
+          // Import authApi here to avoid circular dependency
+          const { authApi } = await import('../api');
+          const response = await authApi.me();
+          
+          if (response.data.success && (response.data as AuthApiResponse).user) {
+            set({
+              user: (response.data as AuthApiResponse).user,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+          } else {
+            set({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
+      },
     }),
     {
       name: 'bulaale-auth-storage',
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

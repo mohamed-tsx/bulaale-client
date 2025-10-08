@@ -9,17 +9,12 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 10000, // 10 second timeout
+  withCredentials: true, // Include cookies in requests
 });
 
-// Add auth token to requests
+// Request interceptor for logging (optional)
 api.interceptors.request.use((config) => {
-  // Check if we're in browser environment before accessing localStorage
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
+  console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
   return config;
 });
 
@@ -64,6 +59,12 @@ export interface ApiResponse<T> {
   success: boolean;
   message?: string;
   data: T;
+}
+
+export interface AuthApiResponse {
+  success: boolean;
+  message?: string;
+  user?: any;
 }
 
 // Specific response types for different endpoints
@@ -289,7 +290,7 @@ export const orderApi = {
   getAll: (params?: any) => api.get<OrderApiResponse<{orders: Order[], pagination: any}>>('/orders', { params }),
   getById: (id: string) => api.get<OrderApiResponse<Order>>(`/orders/${id}`),
   getByCode: (orderCode: string) => api.get<OrderApiResponse<Order>>(`/orders/track/${orderCode}`),
-  getMyOrders: () => api.get<OrderApiResponse<Order[]>>('/orders/me'),
+  getMyOrders: () => api.get<ApiResponse<Order[]>>('/orders/me'),
   updateStatus: (id: string, status: string) => api.patch(`/orders/${id}/status`, { status }),
   cancel: (id: string, reason?: string) => api.patch(`/orders/${id}/cancel`, { reason }),
 };
@@ -306,11 +307,15 @@ export const shipmentApi = {
 };
 
 export const authApi = {
-  register: (data: { name: string; email: string; password: string }) => 
-    api.post<ApiResponse<{ user: any; token: string }>>('/user/register', data),
-  login: (data: { email: string; password: string }) => 
-    api.post<ApiResponse<{ user: any; token: string }>>('/user/login', data),
-  me: () => api.get<ApiResponse<any>>('/user/me'),
+  register: (data: FormData | { username: string; name: string; phoneNumber: string; email: string; password: string }) => 
+    api.post<AuthApiResponse>('/auth/register', data, {
+      headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' }
+    }),
+  login: (data: { username: string; password: string }) => 
+    api.post<AuthApiResponse>('/auth/login', data),
+  me: () => api.get<AuthApiResponse>('/auth/me'),
+  updateProfile: (data: { name?: string; email?: string; phone?: string; address?: string }) => 
+    api.put<ApiResponse<any>>('/auth/profile', data),
 };
 
 export const waafiApi = {

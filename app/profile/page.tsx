@@ -9,13 +9,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { authApi, orderApi, Order } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -32,12 +35,12 @@ export default function ProfilePage() {
     try {
       const response = await authApi.me();
       if (response.data.success) {
-        setUser(response.data.data);
+        setUser(response.data.user);
         setFormData({
-          name: response.data.data.name || '',
-          email: response.data.data.email || '',
-          phone: response.data.data.phone || '',
-          address: response.data.data.address || '',
+          name: response.data.user.name || '',
+          email: response.data.user.email || '',
+          phone: response.data.user.phone || '',
+          address: response.data.user.address || '',
         });
       }
     } catch (error) {
@@ -62,11 +65,59 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     try {
-      // Here you would typically call an API to update user profile
-      setIsEditing(false);
-      // Show success message
-    } catch (error) {
+      setIsSaving(true);
+      
+      // Prepare the data to send (only include changed fields)
+      const updateData: { name?: string; email?: string; phone?: string; address?: string } = {};
+      
+      if (formData.name !== user?.name) updateData.name = formData.name;
+      if (formData.email !== user?.email) updateData.email = formData.email;
+      if (formData.phone !== user?.phone) updateData.phone = formData.phone;
+      if (formData.address !== user?.address) updateData.address = formData.address;
+      
+      // Only make API call if there are changes
+      if (Object.keys(updateData).length === 0) {
+        setIsEditing(false);
+        toast({
+          title: "No changes to save",
+          description: "Your profile information is already up to date.",
+        });
+        return;
+      }
+      
+      const response = await authApi.updateProfile(updateData);
+      
+      if (response.data.success) {
+        // Update local user state with the response data
+        setUser(response.data.data);
+        
+        // Update form data to match the updated user data
+        setFormData({
+          name: response.data.data.name || '',
+          email: response.data.data.email || '',
+          phone: response.data.data.phone || response.data.data.phonenumber || '',
+          address: response.data.data.address || '',
+        });
+        
+        setIsEditing(false);
+        
+        toast({
+          title: "Profile updated successfully",
+          description: "Your profile information has been saved.",
+        });
+      }
+    } catch (error: any) {
       console.error('Error saving profile:', error);
+      
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to update profile';
+      
+      toast({
+        title: "Update failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -134,11 +185,11 @@ export default function ProfilePage() {
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSave}>
+                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
                       <Save className="h-4 w-4 mr-2" />
-                      Save
+                      {isSaving ? 'Saving...' : 'Save'}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleCancel}>
+                    <Button variant="outline" size="sm" onClick={handleCancel} disabled={isSaving}>
                       <X className="h-4 w-4 mr-2" />
                       Cancel
                     </Button>
@@ -154,7 +205,7 @@ export default function ProfilePage() {
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSaving}
                   />
                 </div>
                 <div>
@@ -164,7 +215,7 @@ export default function ProfilePage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSaving}
                   />
                 </div>
                 <div>
@@ -174,7 +225,7 @@ export default function ProfilePage() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSaving}
                   />
                 </div>
                 <div>
@@ -183,7 +234,7 @@ export default function ProfilePage() {
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSaving}
                   />
                 </div>
               </div>

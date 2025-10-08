@@ -1,8 +1,23 @@
 "use client"
 
-import { ShoppingCart, Menu, Search, Heart, User } from "lucide-react"
+import { ShoppingCart, Menu, Search, Heart, User, LogOut } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { useCartStore } from "@/lib/stores/cart-store"
+import { useState, useEffect } from "react"
+import { authApi } from "@/lib/api"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 interface HeaderProps {
   onCartClick?: () => void;
@@ -10,7 +25,44 @@ interface HeaderProps {
 
 export default function Header({ onCartClick }: HeaderProps) {
   const { getTotalItems } = useCartStore()
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const totalItems = getTotalItems()
+
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
+    try {
+      const response = await authApi.me()
+      if (response.data.success) {
+        setUser(response.data.user)
+      }
+    } catch (error) {
+      // User not authenticated
+      setUser(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      // Clear any stored auth data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user')
+      }
+      setUser(null)
+      toast.success("Logged out successfully")
+      router.push('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast.error("Error logging out")
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
@@ -47,9 +99,64 @@ export default function Header({ onCartClick }: HeaderProps) {
           <button className="hidden md:block">
             <Heart className="h-5 w-5 text-foreground hover:text-accent transition-colors" />
           </button>
-          <button className="hidden md:block">
-            <User className="h-5 w-5 text-foreground hover:text-accent transition-colors" />
-          </button>
+          
+          {/* User Authentication Section */}
+          {isLoading ? (
+            <div className="hidden md:block w-8 h-8 bg-muted animate-pulse rounded-full" />
+          ) : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-xs">
+                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/orders">
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    <span>My Orders</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="hidden md:flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/auth/login">Login</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/auth/register">Sign Up</Link>
+              </Button>
+            </div>
+          )}
+          
           <button 
             className="relative hover:bg-accent/10 p-2 rounded-lg transition-colors"
             onClick={onCartClick}
@@ -62,6 +169,65 @@ export default function Header({ onCartClick }: HeaderProps) {
               </span>
             )}
           </button>
+          
+          {/* Mobile Authentication */}
+          <div className="md:hidden flex items-center gap-2">
+            {isLoading ? (
+              <div className="w-6 h-6 bg-muted animate-pulse rounded-full" />
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-xs">
+                        {user.name?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders">
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      <span>My Orders</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/auth/login">Login</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/auth/register">Sign Up</Link>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>
