@@ -83,7 +83,7 @@ export default function CategoriesPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild>
-              <Link href="/shop">View All Products</Link>
+              <Link href="/products">View All Products</Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/contact">Contact Us</Link>

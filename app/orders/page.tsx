@@ -119,7 +119,7 @@ export default function OrdersPage() {
             You haven't placed any orders yet. Start shopping to see your orders here.
           </p>
           <Button asChild size="lg">
-            <Link href="/shop">Start Shopping</Link>
+            <Link href="/products">Start Shopping</Link>
           </Button>
         </div>
       </div>

@@ -85,7 +85,7 @@ export default function CartPage() {
             Looks like you haven't added any items to your cart yet.
           </p>
           <Button asChild size="lg">
-            <Link href="/shop">Start Shopping</Link>
+            <Link href="/products">Start Shopping</Link>
           </Button>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default function CartPage() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" asChild>
-          <Link href="/shop">
+          <Link href="/products">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Continue Shopping
           </Link>

@@ -210,7 +210,7 @@ export default function ProductsPage() {
               return (
                 <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 bg-white">
                   <div className="relative">
-                    <Link href={`/products/${product.id}`}>
+                    <Link href={`/product/${product.id}`}>
                       <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden cursor-pointer">
                         {product.coverImageUrl ? (
                           <img

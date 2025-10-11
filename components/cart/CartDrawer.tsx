@@ -48,7 +48,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <p className="text-gray-500 text-sm">Add some products to get started</p>
               </div>
               <Button asChild onClick={onClose}>
-                <Link href="/shop">Continue Shopping</Link>
+                <Link href="/products">Continue Shopping</Link>
               </Button>
             </div>
           ) : (

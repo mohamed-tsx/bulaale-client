@@ -376,7 +376,7 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full">
-                <Link href="/shop">Continue Shopping</Link>
+                <Link href="/products">Continue Shopping</Link>
               </Button>
               {order.status === 'DELIVERED' && (
                 <Button variant="outline" className="w-full">

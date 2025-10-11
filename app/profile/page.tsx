@@ -366,7 +366,7 @@ export default function ProfilePage() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
                   <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
                   <Button asChild>
-                    <a href="/shop">Start Shopping</a>
+                    <a href="/products">Start Shopping</a>
                   </Button>
                 </div>
               )}
@@ -417,7 +417,7 @@ export default function ProfilePage() {
                 </a>
               </Button>
               <Button variant="outline" className="w-full justify-start" asChild>
-                <a href="/shop">
+                <a href="/products">
                   <Package className="h-4 w-4 mr-2" />
                   Continue Shopping
                 </a>

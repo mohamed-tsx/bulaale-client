@@ -185,7 +185,7 @@ export default function AboutPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg" variant="secondary">
-            <Link href="/shop">Start Shopping</Link>
+            <Link href="/products">Start Shopping</Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
             <Link href="/contact">Contact Us</Link>

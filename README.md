@@ -141,7 +141,7 @@ npm start
 - Newsletter signup
 - Call-to-action sections
 
-### 🛍️ Shop Page (`/shop`)
+### 🛍️ Products Page (`/products`)
 - Product grid with filtering and sorting
 - Search functionality
 - Pagination

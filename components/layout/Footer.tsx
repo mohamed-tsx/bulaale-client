@@ -3,10 +3,10 @@ import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react'
 import Image from 'next/image';
 
 const shopLinks = [
-  { name: 'All Products', href: '/shop' },
+  { name: 'All Products', href: '/products' },
   { name: 'Categories', href: '/categories' },
-  { name: 'New Arrivals', href: '/shop?sort=newest' },
-  { name: 'Best Sellers', href: '/shop?sort=popular' },
+  { name: 'New Arrivals', href: '/products?sort=newest' },
+  { name: 'Best Sellers', href: '/products?sort=popular' },
 ];
 
 const supportLinks = [
