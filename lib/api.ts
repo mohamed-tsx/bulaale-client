@@ -14,7 +14,6 @@ export const api = axios.create({
 
 // Request interceptor for logging (optional)
 api.interceptors.request.use((config) => {
-  console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
   return config;
 });
 

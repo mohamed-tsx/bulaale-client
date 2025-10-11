@@ -65,8 +65,6 @@ export default function CartPage() {
     return Math.max(0, getSubtotal() + getVATAmount() - totalDiscount);
   }, [getSubtotal, getVATAmount, totalDiscount]);
 
-  // Debug logging (removed for performance)
-  // console.log('Cart Page Debug:', { ... });
 
   const handleCheckout = () => {
     setIsCheckingOut(true);

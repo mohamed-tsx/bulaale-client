@@ -129,16 +129,7 @@ export const discountApi = {
     appliedDiscounts: DiscountPreview[];
     finalAmount: number;
   }> {
-    console.log('=== FRONTEND DISCOUNT API REQUEST ===');
-    console.log('Cart Items:', cartItems.map(item => ({
-      productId: item.productId,
-      variantId: item.variantId,
-      categoryId: item.categoryId,
-      price: item.price,
-      quantity: item.quantity
-    })));
-    console.log('Discount Code:', discountCode);
-    console.log('Customer ID:', customerId);
+   
     
     // Transform cart items to match backend expectations
     const transformedCartItems = cartItems.map(item => ({
@@ -154,11 +145,6 @@ export const discountApi = {
       discountCode,
       customerId,
     });
-    
-    console.log('=== FRONTEND DISCOUNT API RESPONSE ===');
-    console.log('Response:', response.data);
-    console.log('Applied Discounts:', response.data.data?.appliedDiscounts);
-    console.log('Total Discount:', response.data.data?.totalDiscount);
     
     return response.data.data;
   },

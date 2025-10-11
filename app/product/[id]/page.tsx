@@ -294,7 +294,6 @@ export default function ProductDetailPage() {
     )
   }
 
-  console.log(product);
   
   if (error || !product) {
     return (

@@ -23,8 +23,6 @@ export function DiscountDisplay({
 }: DiscountDisplayProps) {
   const { discounts, loading, error } = useProductDiscounts(productId, variantId, categoryId);
 
-  // Debug logging (removed for performance)
-  // console.log('DiscountDisplay Debug:', { ... });
 
   if (loading) {
     return (
@@ -35,12 +33,10 @@ export function DiscountDisplay({
   }
 
   if (error) {
-    console.log('DiscountDisplay Error:', error);
     return null;
   }
 
   if (discounts.length === 0) {
-    // console.log('No discounts found for product');
     return null;
   }
 
@@ -51,13 +47,10 @@ export function DiscountDisplay({
     return currentAmount > bestAmount ? current : best;
   });
 
-  // console.log('Best discount selected:', bestDiscount);
 
   const discountAmount = calculateDiscountAmount(bestDiscount, price);
   const finalPrice = price - discountAmount;
   
-  // Debug logging (removed for performance)
-  // console.log('Final calculation:', { ... });
 
   // Test calculation for debugging (removed for performance)
   // if (bestDiscount.type === 'PERCENT' && bestDiscount.value === 90) { ... }
@@ -92,25 +85,20 @@ export function DiscountDisplay({
 function calculateDiscountAmount(discount: any, price: number): number {
   if (!discount || !price || price <= 0) return 0;
   
-  // Debug logging (removed for performance)
-  // console.log('calculateDiscountAmount Debug:', { ... });
   
   if (discount.type === 'PERCENT') {
     const amount = (price * discount.value) / 100;
     const finalAmount = discount.maxDiscount ? Math.min(amount, discount.maxDiscount) : amount;
     
-    // console.log('Percentage calculation:', { ... });
     
     return finalAmount;
   } else if (discount.type === 'FIXED') {
     const amount = Math.min(discount.value, price);
-    // console.log('Fixed calculation:', { ... });
     return amount;
   } else if (discount.type === 'BOGO') {
     // For BOGO, we'll show a simplified calculation
     // In a real implementation, this would be more complex
     const amount = discount.bogoDiscountValue || 0;
-    // console.log('BOGO calculation:', { ... });
     return amount;
   }
   return 0;

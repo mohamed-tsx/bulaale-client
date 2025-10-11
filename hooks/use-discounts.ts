@@ -151,13 +151,10 @@ export function useProductDiscounts(productId: string, variantId?: string, categ
       setError(null);
       const activeDiscounts = await discountApi.getActive();
       
-          // Debug logging (removed for performance)
-          // console.log('Product Discount Debug:', { ... });
       
       // Filter discounts that apply to this product
       const applicableDiscounts = activeDiscounts.filter(discount => {
         if (discount.scope === 'CART') {
-          // console.log('Cart scope discount:', discount.name);
           return true;
         }
         
@@ -175,7 +172,6 @@ export function useProductDiscounts(productId: string, variantId?: string, categ
           const isApplicable = targetsProduct || targetsVariant || targetsCategory || hasNoTargeting;
           
           // Debug logging (removed for performance)
-          // console.log('Item scope discount check:', { ... });
           
           return isApplicable;
         }
@@ -183,7 +179,6 @@ export function useProductDiscounts(productId: string, variantId?: string, categ
         return false;
       });
       
-      // console.log('Applicable discounts:', applicableDiscounts);
       setDiscounts(applicableDiscounts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch product discounts');
