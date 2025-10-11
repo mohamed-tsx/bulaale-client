@@ -71,7 +71,9 @@ export default function Header({ onCartClick }: HeaderProps) {
           <button className="lg:hidden">
             <Menu className="h-6 w-6" />
           </button>
-          <Image src="/Logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
+          <Link href="/">
+            <Image src="/Logo.svg" alt="Bulaale Baby Care" width={100} height={100} />
+          </Link>
           <nav className="hidden lg:flex items-center gap-6">
             <a href="/products" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
               All Products

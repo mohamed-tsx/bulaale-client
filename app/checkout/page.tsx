@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CreditCard, MapPin, User, Phone, Mail, ExternalLink, Package } from 'lucide-react';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { orderApi, paymentApi } from '@/lib/api';
 import { Order } from '@/lib/api';
@@ -18,6 +19,7 @@ import { getImageUrl } from '@/lib/api';
 import { useErrorHandler } from '@/lib/contexts/error-handler-context';
 import { useOrdersStore } from '@/lib/stores';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useDiscountCalculation } from '@/hooks/use-discounts';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -25,6 +27,59 @@ export default function CheckoutPage() {
   const { items, getSubtotal, getVATAmount, getVATRate, getGrandTotal, clearCart } = useCartStore();
   const { addOrder, setCurrentOrder } = useOrdersStore();
   const { user, isAuthenticated } = useAuthStore();
+
+  // Memoized cart items conversion for discount calculation
+  const cartItems = useMemo(() => items.map(item => ({
+    productId: item.productId,
+    variantId: item.variantId,
+    categoryId: item.categoryId,
+    price: Number(item.price),
+    quantity: item.quantity,
+  })), [items]);
+
+  const {
+    appliedDiscounts,
+    totalDiscount,
+    loading: discountLoading,
+    error: discountError,
+  } = useDiscountCalculation(cartItems);
+
+  // Memoized helper function to check if an item has discounts and calculate per-item discount
+  const getItemDiscount = useCallback((item: any) => {
+    if (!appliedDiscounts || appliedDiscounts.length === 0) return null;
+    
+    const applicableDiscount = appliedDiscounts.find(discount => 
+      discount.targetProducts?.some(tp => tp.productId === item.productId) ||
+      discount.targetVariants?.some(tv => tv.variantId === item.variantId) ||
+      discount.targetCategories?.some(tc => tc.categoryId === item.categoryId) ||
+      (!discount.targetProducts?.length && !discount.targetVariants?.length && !discount.targetCategories?.length)
+    );
+
+    if (!applicableDiscount) return null;
+
+    // Calculate per-item discount amount
+    const itemTotal = item.price * item.quantity;
+    let itemDiscountAmount = 0;
+
+    if (applicableDiscount.type === 'PERCENT') {
+      itemDiscountAmount = (itemTotal * applicableDiscount.value) / 100;
+      if (applicableDiscount.maxDiscount) {
+        itemDiscountAmount = Math.min(itemDiscountAmount, applicableDiscount.maxDiscount);
+      }
+    } else if (applicableDiscount.type === 'FIXED') {
+      itemDiscountAmount = Math.min(applicableDiscount.value, itemTotal);
+    }
+
+    return {
+      ...applicableDiscount,
+      itemDiscountAmount: Number(itemDiscountAmount.toFixed(2))
+    };
+  }, [appliedDiscounts]);
+
+  // Calculate final total with discounts
+  const getFinalTotal = useCallback(() => {
+    return Math.max(0, getSubtotal() + getVATAmount() - totalDiscount);
+  }, [getSubtotal, getVATAmount, totalDiscount]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -83,6 +138,8 @@ export default function CheckoutPage() {
           country: formData.country,
         },
         notes: formData.notes,
+        // Include applied discounts for tracking
+        appliedDiscounts: appliedDiscounts || [],
       };
 
       const orderResponse = await orderApi.create(orderData);
@@ -97,7 +154,7 @@ export default function CheckoutPage() {
       const paymentData = {
         orderId: order.id,
         method: formData.paymentMethod,
-        amount: getGrandTotal(), // Use grand total including VAT
+        amount: getFinalTotal(), // Use final total with discounts
         phone: formData.phoneNumber,
       };
 
@@ -319,7 +376,7 @@ export default function CheckoutPage() {
               className="w-full"
               disabled={isProcessing}
             >
-              {isProcessing ? 'Processing Order...' : `Place Order - $${getGrandTotal().toFixed(2)}`}
+              {isProcessing ? 'Processing Order...' : `Place Order - $${getFinalTotal().toFixed(2)}`}
             </Button>
           </form>
         </div>
@@ -331,6 +388,35 @@ export default function CheckoutPage() {
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Discount Alert */}
+              {totalDiscount > 0 && (
+                <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">%</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-green-800">
+                          🎉 Great Savings!
+                        </div>
+                        <div className="text-xs text-green-700">
+                          You're saving {((totalDiscount / getSubtotal()) * 100).toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-green-800">
+                        -${totalDiscount.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-green-600">
+                        Total savings
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Cart Items */}
               <div className="space-y-3">
                 {items.map((item) => (
@@ -347,16 +433,42 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {item.name}
-                      </p>
+                      <div className="flex items-start justify-between">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {item.name}
+                        </p>
+                        {/* Discount Badge for this item */}
+                        {getItemDiscount(item) && (
+                          <Badge variant="destructive" className="ml-2 text-xs">
+                            {getItemDiscount(item)?.type === 'PERCENT' ? `${getItemDiscount(item)?.value}% OFF` : 'DISCOUNT'}
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">
                         Qty: {item.quantity}
                       </p>
                     </div>
-                    <p className="text-sm font-medium text-primary">
-                      ${(Number(item.price) * item.quantity).toFixed(2)}
-                    </p>
+                    <div className="text-right">
+                      {getItemDiscount(item) ? (
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500 line-through">
+                              ${(Number(item.price) * item.quantity).toFixed(2)}
+                            </span>
+                            <span className="text-sm font-bold text-green-600">
+                              ${((Number(item.price) - (getItemDiscount(item)?.itemDiscountAmount || 0) / item.quantity) * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="text-xs text-green-600">
+                            Save ${(getItemDiscount(item)?.itemDiscountAmount || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm font-medium text-primary">
+                          ${(Number(item.price) * item.quantity).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -369,6 +481,33 @@ export default function CheckoutPage() {
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-medium">${getSubtotal().toFixed(2)}</span>
                 </div>
+                
+                {/* Applied Discounts */}
+                {appliedDiscounts && appliedDiscounts.length > 0 && (
+                  <div className="bg-gray-50 p-2 rounded-lg">
+                    <div className="text-xs font-medium text-gray-700 mb-1">Applied Discounts:</div>
+                    {appliedDiscounts.map((discount, index) => (
+                      <div key={index} className="flex justify-between text-xs">
+                        <span className="text-gray-600">
+                          {discount.name}
+                          {discount.type === 'PERCENT' && ` (${discount.value}% off)`}
+                          {discount.type === 'FIXED' && ` ($${discount.value} off)`}
+                        </span>
+                        <span className="text-green-600 font-medium">
+                          -${discount.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {totalDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="font-medium">Total Discount</span>
+                    <span className="font-bold">-${totalDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
                   <span className="font-medium text-green-600">Free</span>
@@ -380,8 +519,14 @@ export default function CheckoutPage() {
                 <Separator />
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-lg font-bold text-primary">${getGrandTotal().toFixed(2)}</span>
+                  <span className="text-lg font-bold text-primary">${getFinalTotal().toFixed(2)}</span>
                 </div>
+                
+                {totalDiscount > 0 && (
+                  <div className="text-center text-sm text-green-600 bg-green-50 p-2 rounded-lg">
+                    You save ${totalDiscount.toFixed(2)} on this order
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

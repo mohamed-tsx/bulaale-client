@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useErrorHandler } from "@/lib/contexts/error-handler-context";
 import { ErrorAlert } from "@/components/ui/alert";
 import { useProductsStore } from "@/lib/stores";
+import { ProductDiscountBadge } from "@/components/ProductDiscountBadge";
 
 export default function ProductsPage() {
   const { handleError } = useErrorHandler();
@@ -228,6 +229,17 @@ export default function ProductsPage() {
                         )}
                       </div>
                     </Link>
+                    
+                    {/* Discount Badge */}
+                    {availableVariants.length > 0 && (
+                      <ProductDiscountBadge
+                        productId={product.id}
+                        variantId={availableVariants[0].id}
+                        categoryId={product.categoryId}
+                        price={Number(availableVariants[0].price)}
+                      />
+                    )}
+                    
                     {isOutOfStock && (
                       <Badge className="absolute top-2 left-2 bg-red-500 text-white">
                         Out of Stock
@@ -251,9 +263,19 @@ export default function ProductsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         {availableVariants.length > 0 ? (
-                          <span className="text-sm font-bold text-blue-600">
-                            ${availableVariants[0].price}
-                          </span>
+                          <div className="space-y-1">
+                            <span className="text-sm font-bold text-blue-600">
+                              ${availableVariants[0].price}
+                            </span>
+                            {/* Discount Display for Product Card */}
+                            <ProductDiscountBadge
+                              productId={product.id}
+                              variantId={availableVariants[0].id}
+                              categoryId={product.categoryId}
+                              price={Number(availableVariants[0].price)}
+                              className="!relative !top-0 !right-0 text-xs"
+                            />
+                          </div>
                         ) : (
                           <span className="text-sm font-bold text-gray-400">
                             Out of Stock

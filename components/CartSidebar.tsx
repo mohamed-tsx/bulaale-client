@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/lib/stores/cart-store";
 import Link from "next/link";
+import { useDiscountCalculation } from "@/hooks/use-discounts";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -22,6 +23,56 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const { items, updateQuantity, removeItem, getSubtotal, getVATAmount, getVATRate, getGrandTotal, getTotalItems, clearCart } = useCartStore();
+  
+  // Memoized cart items conversion
+  const cartItems = useMemo(() => items.map(item => ({
+    productId: item.productId,
+    variantId: item.variantId,
+    categoryId: item.categoryId,
+    price: Number(item.price),
+    quantity: item.quantity,
+  })), [items]);
+
+  const {
+    appliedDiscounts,
+    totalDiscount,
+    loading: discountLoading,
+    error: discountError,
+  } = useDiscountCalculation(cartItems);
+
+  // Memoized helper function to check if an item has discounts and calculate per-item discount
+  const getItemDiscount = useCallback((item: any) => {
+    if (!appliedDiscounts || appliedDiscounts.length === 0) return null;
+    
+    const applicableDiscount = appliedDiscounts.find(discount => 
+      discount.targetProducts?.some(tp => tp.productId === item.productId) ||
+      discount.targetVariants?.some(tv => tv.variantId === item.variantId) ||
+      discount.targetCategories?.some(tc => tc.categoryId === item.categoryId) ||
+      (!discount.targetProducts?.length && !discount.targetVariants?.length && !discount.targetCategories?.length)
+    );
+
+    if (!applicableDiscount) return null;
+
+    // Calculate per-item discount amount
+    const itemTotal = item.price * item.quantity;
+    let itemDiscountAmount = 0;
+
+    if (applicableDiscount.type === 'PERCENT') {
+      itemDiscountAmount = (itemTotal * applicableDiscount.value) / 100;
+      // maxDiscount property is not present on DiscountPreview, so skip this check
+    } else if (applicableDiscount.type === 'FIXED') {
+      itemDiscountAmount = Math.min(applicableDiscount.value, itemTotal);
+    }
+
+    return {
+      ...applicableDiscount,
+      itemDiscountAmount: Number(itemDiscountAmount.toFixed(2))
+    };
+  }, [appliedDiscounts]);
+
+  const getFinalTotal = () => {
+    return Math.max(0, getSubtotal() + getVATAmount() - totalDiscount);
+  };
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -105,9 +156,17 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
-                          {item.name}
-                        </h4>
+                        <div className="flex items-start justify-between mb-1">
+                          <h4 className="font-medium text-sm text-gray-900 line-clamp-2">
+                            {item.name}
+                          </h4>
+                          {/* Discount Badge for this item */}
+                          {getItemDiscount(item) && (
+                            <Badge variant="destructive" className="ml-2 text-xs">
+                              {getItemDiscount(item)?.type === 'PERCENT' ? `${getItemDiscount(item)?.value}% OFF` : 'DISCOUNT'}
+                            </Badge>
+                          )}
+                        </div>
                         {item.variant && (
                           <p className="text-xs text-gray-600 mb-2">
                             {item.variant.color && `${item.variant.color}`}
@@ -140,9 +199,25 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                           </div>
                           
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-bold text-blue-600">
-                              ${(item.price * item.quantity).toFixed(2)}
-                            </span>
+                            {getItemDiscount(item) ? (
+                              <div className="flex flex-col items-end">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-gray-500 line-through">
+                                    ${(item.price * item.quantity).toFixed(2)}
+                                  </span>
+                                  <span className="text-sm font-bold text-green-600">
+                                    ${((item.price - (getItemDiscount(item)?.itemDiscountAmount || 0) / item.quantity) * item.quantity).toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-green-600">
+                                  Save ${(getItemDiscount(item)?.itemDiscountAmount || 0).toFixed(2)}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-sm font-bold text-blue-600">
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </span>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -165,11 +240,67 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         {/* Footer */}
         {items.length > 0 && (
           <div className="border-t border-gray-200 p-4 bg-white">
+            {/* Discount Alert */}
+            {totalDiscount > 0 && (
+              <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">%</span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-green-800">
+                        🎉 Great Savings!
+                      </div>
+                      <div className="text-xs text-green-700">
+                        You're saving {((totalDiscount / getSubtotal()) * 100).toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-green-800">
+                      -${totalDiscount.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-green-600">
+                      Total savings
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2 mb-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Subtotal:</span>
                 <span className="text-sm font-medium">${getSubtotal().toFixed(2)}</span>
               </div>
+              
+              {/* Applied Discounts */}
+              {appliedDiscounts && appliedDiscounts.length > 0 && (
+                <div className="bg-gray-50 p-2 rounded-lg">
+                  <div className="text-xs font-medium text-gray-700 mb-1">Applied Discounts:</div>
+                  {appliedDiscounts.map((discount, index) => (
+                    <div key={index} className="flex justify-between text-xs">
+                      <span className="text-gray-600">
+                        {discount.name}
+                        {discount.type === 'PERCENT' && ` (${discount.value}% off)`}
+                        {discount.type === 'FIXED' && ` ($${discount.value} off)`}
+                      </span>
+                      <span className="text-green-600 font-medium">
+                        -${discount.amount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {totalDiscount > 0 && (
+                <div className="flex items-center justify-between text-green-600">
+                  <span className="text-sm font-medium">Total Discount:</span>
+                  <span className="text-sm font-bold">-${totalDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">VAT ({(getVATRate() * 100).toFixed(0)}%):</span>
                 <span className="text-sm font-medium">${getVATAmount().toFixed(2)}</span>
@@ -177,7 +308,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               <div className="flex items-center justify-between border-t pt-2">
                 <span className="text-lg font-semibold text-gray-900">Total:</span>
                 <span className="text-xl font-bold text-blue-600">
-                  ${getGrandTotal().toFixed(2)}
+                  ${getFinalTotal().toFixed(2)}
                 </span>
               </div>
             </div>

@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import { Product, getImageUrl, productApi } from "@/lib/api"
 import { useCartStore } from "@/lib/stores/cart-store"
+import { DiscountDisplay } from "@/components/DiscountDisplay"
 
 /* ====================== Helpers ====================== */
 
@@ -398,17 +399,29 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Price Section */}
-            <div className="flex items-baseline gap-4">
-              <span className="text-3xl font-bold text-foreground">
-                ${currentPrice}
-              </span>
-              {selectedVariant?.Inventory && (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="text-sm text-muted-foreground">
-                    {selectedVariant.Inventory?.quantity || 0} in stock
-                  </span>
-                </div>
+            <div className="space-y-2">
+              <div className="flex items-baseline gap-4">
+                <span className="text-3xl font-bold text-foreground">
+                  ${currentPrice}
+                </span>
+                {selectedVariant?.Inventory && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    <span className="text-sm text-muted-foreground">
+                      {selectedVariant.Inventory?.quantity || 0} in stock
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Discount Display */}
+              {selectedVariant && (
+                <DiscountDisplay
+                  productId={product.id}
+                  variantId={selectedVariant.id}
+                  categoryId={product.categoryId}
+                  price={Number(selectedVariant.price)}
+                />
               )}
             </div>
             <p className="text-sm text-muted-foreground">Free shipping on orders over $50</p>
