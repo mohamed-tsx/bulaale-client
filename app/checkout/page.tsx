@@ -456,7 +456,7 @@ export default function CheckoutPage() {
                               ${(Number(item.price) * item.quantity).toFixed(2)}
                             </span>
                             <span className="text-sm font-bold text-green-600">
-                              ${((Number(item.price) - (getItemDiscount(item)?.itemDiscountAmount || 0) / item.quantity) * item.quantity).toFixed(2)}
+                              ${((Number(item.price) * item.quantity) - (getItemDiscount(item)?.itemDiscountAmount || 0)).toFixed(2)}
                             </span>
                           </div>
                           <div className="text-xs text-green-600">
