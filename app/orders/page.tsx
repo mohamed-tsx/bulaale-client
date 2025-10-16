@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { orderApi, Order, getImageUrl } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/lib/contexts/i18n-context';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,7 @@ export default function OrdersPage() {
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const { toast } = useToast();
+  const t = useTranslation();
 
   useEffect(() => {
     fetchOrders();
@@ -114,12 +116,12 @@ export default function OrdersPage() {
           <div className="text-gray-400 mb-6">
             <Package className="mx-auto h-16 w-16" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">No orders yet</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('orders.noOrdersYet')}</h1>
           <p className="text-gray-600 mb-8">
-            You haven't placed any orders yet. Start shopping to see your orders here.
+            {t('orders.noOrdersDescription')}
           </p>
           <Button asChild size="lg">
-            <Link href="/products">Start Shopping</Link>
+            <Link href="/products">{t('orders.startShopping')}</Link>
           </Button>
         </div>
       </div>
@@ -129,8 +131,8 @@ export default function OrdersPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
-        <p className="text-gray-600">Track and manage your orders</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('orders.myOrders')}</h1>
+        <p className="text-gray-600">{t('orders.trackAndManage')}</p>
       </div>
 
       <div className="space-y-6">
@@ -158,7 +160,7 @@ export default function OrdersPage() {
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/order/${order.orderCode}`}>
                       <Eye className="h-4 w-4 mr-2" />
-                      View Details
+{t('orders.viewDetails')}
                     </Link>
                   </Button>
                   {canCancelOrder(order) && (
@@ -166,7 +168,7 @@ export default function OrdersPage() {
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm">
                           <X className="h-4 w-4 mr-2" />
-                          Cancel Order
+{t('orders.cancelOrder')}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

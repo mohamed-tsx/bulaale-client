@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Product, getImageUrl, productApi } from "@/lib/api"
 import { useCartStore } from "@/lib/stores/cart-store"
 import { DiscountDisplay } from "@/components/DiscountDisplay"
+import { useTranslation } from "@/lib/contexts/i18n-context"
 
 /* ====================== Helpers ====================== */
 
@@ -83,6 +84,7 @@ const isColorAvailable = (product: Product, color: string, selectedSize: string 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>()
   const id = params?.id
+  const t = useTranslation()
 
   // ----- Hooks (declare all before any return) -----
   const [product, setProduct] = useState<Product | null>(null)
@@ -299,8 +301,8 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white border rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-semibold mb-2">Oops!</h2>
-          <p className="text-gray-600">{error ?? "Product not found."}</p>
+          <h2 className="text-2xl font-semibold mb-2">{t('common.error')}</h2>
+          <p className="text-gray-600">{error ?? t('product.notFound')}</p>
         </div>
       </div>
     )
@@ -329,7 +331,7 @@ export default function ProductDetailPage() {
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                   {!isInStock && (
                     <Badge variant="destructive">
-                      Out of Stock
+                      {t('common.outOfStock')}
                     </Badge>
                   )}
                   {product.category && (
@@ -407,7 +409,7 @@ export default function ProductDetailPage() {
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full" />
                     <span className="text-sm text-muted-foreground">
-                      {selectedVariant.Inventory?.quantity || 0} in stock
+                      {selectedVariant.Inventory?.quantity || 0} {t('common.inStock').toLowerCase()}
                     </span>
                   </div>
                 )}
@@ -423,7 +425,7 @@ export default function ProductDetailPage() {
                 />
               )}
             </div>
-            <p className="text-sm text-muted-foreground">Free shipping on orders over $50</p>
+            <p className="text-sm text-muted-foreground">{t('product.freeShipping')}</p>
 
             {/* Variants */}
             {!!product.variants?.length && (
@@ -431,7 +433,7 @@ export default function ProductDetailPage() {
                 {/* Color Selection */}
                 {product.variants.some((v) => v.color) && (
                   <div>
-                    <h3 className="text-sm font-medium text-foreground mb-3">Color</h3>
+                    <h3 className="text-sm font-medium text-foreground mb-3">{t('common.color')}</h3>
                     <TooltipProvider delayDuration={120}>
                       <div className="flex flex-wrap gap-2">
                         {unique((product.variants || []).map((v) => v.color as string)).map((color) => {
@@ -481,7 +483,7 @@ export default function ProductDetailPage() {
                                 <div className="text-center">
                                   <p className="font-medium">{color}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {available ? `${stockCount} in stock` : 'Out of stock'}
+                                    {available ? `${stockCount} ${t('common.inStock').toLowerCase()}` : t('common.outOfStock')}
                                   </p>
                                 </div>
                               </TooltipContent>

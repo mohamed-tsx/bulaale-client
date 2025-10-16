@@ -9,10 +9,12 @@ import { useCartStore } from '@/lib/stores/cart-store';
 import { getImageUrl } from '@/lib/api';
 import { CouponInput } from '@/components/CouponInput';
 import { useDiscountCalculation } from '@/hooks/use-discounts';
+import { useTranslation } from '@/lib/contexts/i18n-context';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getSubtotal, getVATAmount, getVATRate, clearCart } = useCartStore();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const t = useTranslation();
 
   // Memoized cart items conversion
   const cartItems = useMemo(() => items.map(item => ({
@@ -97,12 +99,12 @@ export default function CartPage() {
         <Button variant="ghost" asChild>
           <Link href="/products">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Continue Shopping
+{t('cart.continueShopping')}
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
-          <p className="text-gray-600">{items.length} item{items.length !== 1 ? 's' : ''} in your cart</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('cart.title')}</h1>
+          <p className="text-gray-600">{items.length} {items.length !== 1 ? t('cart.items') : t('cart.item')} {t('cart.inYourCart')}</p>
         </div>
       </div>
 
@@ -116,10 +118,10 @@ export default function CartPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-green-800">
-                  🎉 Great Savings!
+                  🎉 {t('cart.greatSavings')}
                 </h3>
                 <p className="text-sm text-green-700">
-                  You're saving {((totalDiscount / getSubtotal()) * 100).toFixed(1)}% on your order
+                  {t('cart.youreSaving', { percentage: ((totalDiscount / getSubtotal()) * 100).toFixed(1) })} {t('cart.onYourOrder')}
                 </p>
               </div>
             </div>
@@ -128,7 +130,7 @@ export default function CartPage() {
                 -${totalDiscount.toFixed(2)}
               </div>
               <div className="text-sm text-green-600">
-                Total savings
+                {t('cart.totalSavings')}
               </div>
             </div>
           </div>

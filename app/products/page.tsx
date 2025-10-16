@@ -21,9 +21,11 @@ import { useErrorHandler } from "@/lib/contexts/error-handler-context";
 import { ErrorAlert } from "@/components/ui/alert";
 import { useProductsStore } from "@/lib/stores";
 import { ProductDiscountBadge } from "@/components/ProductDiscountBadge";
+import { useTranslation } from "@/lib/contexts/i18n-context";
 
 export default function ProductsPage() {
   const { handleError } = useErrorHandler();
+  const t = useTranslation();
   const {
     products,
     categories,
@@ -98,7 +100,7 @@ export default function ProductsPage() {
               description={error}
             />
             <Button onClick={fetchData} className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
-              Try Again
+              {t('common.tryAgain')}
             </Button>
           </div>
         </div>
@@ -116,11 +118,11 @@ export default function ProductsPage() {
               <Link href="/">
                 <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Home
+                  {t('common.backToHome')}
                 </Button>
               </Link>
               <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-xl font-bold text-gray-900">All Products</h1>
+              <h1 className="text-xl font-bold text-gray-900">{t('navigation.products')}</h1>
             </div>
             
             <div className="flex-1 max-w-lg mx-8">
@@ -128,7 +130,7 @@ export default function ProductsPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder={t('common.search') + ' ' + t('navigation.products').toLowerCase() + '...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4 py-2 w-full bg-white border-gray-300"
@@ -142,9 +144,9 @@ export default function ProductsPage() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
               >
-                <option value="name">Sort by Name</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
+                <option value="name">{t('products.sortByName')}</option>
+                <option value="price-low">{t('products.priceLowToHigh')}</option>
+                <option value="price-high">{t('products.priceHighToLow')}</option>
               </select>
               
               <Button
@@ -177,7 +179,7 @@ export default function ProductsPage() {
               onClick={() => setSelectedCategory("all")}
               className="px-4 py-2"
             >
-              All Products
+{t('products.allProducts')}
             </Button>
             {categories.map((category) => (
               <Button

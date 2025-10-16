@@ -314,8 +314,12 @@ export const authApi = {
   login: (data: { username: string; password: string }) => 
     api.post<AuthApiResponse>('/auth/login', data),
   me: () => api.get<AuthApiResponse>('/auth/me'),
-  updateProfile: (data: { name?: string; email?: string; phone?: string; address?: string }) => 
-    api.put<ApiResponse<any>>('/auth/profile', data),
+  updateProfile: (data: FormData | { name?: string; email?: string; phone?: string; address?: string }) => 
+    api.put<ApiResponse<any>>('/auth/profile', data, {
+      headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' }
+    }),
+  changePassword: (data: { currentPassword: string; newPassword: string }) => 
+    api.put<ApiResponse<any>>('/auth/change-password', data),
 };
 
 export const waafiApi = {
