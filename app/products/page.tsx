@@ -96,7 +96,7 @@ export default function ProductsPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center max-w-md">
             <ErrorAlert 
-              title="Failed to Load Products"
+              title={t('common.failedToLoad')}
               description={error}
             />
             <Button onClick={fetchData} className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
@@ -197,7 +197,7 @@ export default function ProductsPage() {
         {/* Products Grid/List */}
         <div className="mb-4">
           <p className="text-gray-600">
-            Showing {filteredProducts.length} products
+            {t('products.showing')} {filteredProducts.length} {t('products.products')}
           </p>
         </div>
 
@@ -244,7 +244,7 @@ export default function ProductsPage() {
                     
                     {isOutOfStock && (
                       <Badge className="absolute top-2 left-2 bg-red-500 text-white">
-                        Out of Stock
+                        {t('products.outOfStock')}
                       </Badge>
                     )}
                   </div>
@@ -280,7 +280,7 @@ export default function ProductsPage() {
                           </div>
                         ) : (
                           <span className="text-sm font-bold text-gray-400">
-                            Out of Stock
+                            {t('products.outOfStock')}
                           </span>
                         )}
                       </div>
@@ -291,7 +291,7 @@ export default function ProductsPage() {
                           className="text-xs px-3 py-1"
                         >
                           <Eye className="h-3 w-3 mr-1" />
-                          View Details
+                          {t('products.viewDetails')}
                         </Button>
                       </Link>
                     </div>

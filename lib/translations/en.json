@@ -188,7 +188,10 @@
     "viewProduct": "View Product",
     "addToCart": "Add to Cart",
     "outOfStock": "Out of Stock",
-    "inStock": "In Stock"
+    "inStock": "In Stock",
+    "showing": "Showing",
+    "products": "products",
+    "viewDetails": "View Details"
   },
   "orders": {
     "myOrders": "My Orders",
