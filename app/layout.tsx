@@ -4,6 +4,7 @@ import './globals.css';
 import ClientLayout from '@/components/layout/ClientLayout';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorHandlerProvider } from '@/lib/contexts/error-handler-context';
+import { I18nProvider } from '@/lib/contexts/i18n-context';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const poppins = Poppins({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] });
@@ -29,12 +30,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={poppins.className}>
-        <ErrorHandlerProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
-          <Toaster />
-        </ErrorHandlerProvider>
+        <I18nProvider defaultLanguage="en">
+          <ErrorHandlerProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+            <Toaster />
+          </ErrorHandlerProvider>
+        </I18nProvider>
       </body>
     </html>
   );

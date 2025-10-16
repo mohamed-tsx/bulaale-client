@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 interface HeaderProps {
   onCartClick?: () => void;
@@ -98,6 +99,12 @@ export default function Header({ onCartClick }: HeaderProps) {
               className="bg-transparent border-none outline-none text-sm w-full placeholder:text-muted-foreground"
             />
           </div>
+          
+          {/* Language Switcher */}
+          <div className="hidden md:block">
+            <LanguageSwitcher variant="select" />
+          </div>
+          
           <button className="hidden md:block">
             <Heart className="h-5 w-5 text-foreground hover:text-accent transition-colors" />
           </button>
@@ -171,6 +178,11 @@ export default function Header({ onCartClick }: HeaderProps) {
               </span>
             )}
           </button>
+          
+          {/* Mobile Language Switcher */}
+          <div className="md:hidden">
+            <LanguageSwitcher variant="button" />
+          </div>
           
           {/* Mobile Authentication */}
           <div className="md:hidden flex items-center gap-2">

@@ -20,6 +20,8 @@ import { useErrorHandler } from '@/lib/contexts/error-handler-context';
 import { useOrdersStore } from '@/lib/stores';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useDiscountCalculation } from '@/hooks/use-discounts';
+import { useTranslation } from '@/lib/contexts/i18n-context';
+import Image from 'next/image';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function CheckoutPage() {
   const { items, getSubtotal, getVATAmount, getVATRate, getGrandTotal, clearCart } = useCartStore();
   const { addOrder, setCurrentOrder } = useOrdersStore();
   const { user, isAuthenticated } = useAuthStore();
+  const t = useTranslation();
 
   // Memoized cart items conversion for discount calculation
   const cartItems = useMemo(() => items.map(item => ({
@@ -171,8 +174,8 @@ export default function CheckoutPage() {
       setCurrentOrder(order);
       
       const successMessage = isAuthenticated 
-        ? 'Order placed successfully! You will receive a confirmation email shortly.'
-        : `Order placed successfully! Your order number is ${order.orderCode}. You can track your order using this number.`;
+        ? t('checkout.orderPlacedSuccessfullyWithEmail')
+        : t('checkout.orderPlacedSuccessfullyWithNumber', { orderNumber: order.orderCode });
       
       handleSuccess(successMessage);
 
@@ -186,7 +189,7 @@ export default function CheckoutPage() {
 
     } catch (error) {
       console.error('Checkout error:', error);
-      handleError(error, 'Checkout failed. Please try again.');
+      handleError(error, t('checkout.checkoutFailed'));
     } finally {
       setIsProcessing(false);
     }
@@ -208,25 +211,25 @@ export default function CheckoutPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Shipping Information
+                  {t('checkout.shippingInformation')}
                 </CardTitle>
                 {isAuthenticated && user ? (
                   <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
                     <User className="h-4 w-4" />
-                    <span>Logged in as: {user.name}</span>
+                    <span>{t('checkout.loggedInAs')}: {user.name}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-md">
                     <User className="h-4 w-4" />
-                    <span>Guest checkout - <Link href="/auth/login" className="underline">Login</Link> to save your order</span>
-                    <span className="text-xs text-gray-500">• You can track your order using the order number</span>
+                    <span>{t('checkout.guestCheckout')} - <Link href="/auth/login" className="underline">{t('common.login')}</Link> {t('checkout.loginToSave')}</span>
+                    <span className="text-xs text-gray-500">• {t('checkout.trackWithOrderNumber')}</span>
                   </div>
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="firstName">First Name *</Label>
+                    <Label htmlFor="firstName">{t('checkout.firstName')} *</Label>
                     <Input
                       id="firstName"
                       value={formData.firstName}
@@ -235,7 +238,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Label htmlFor="lastName">{t('checkout.lastName')} *</Label>
                     <Input
                       id="lastName"
                       value={formData.lastName}
@@ -247,7 +250,7 @@ export default function CheckoutPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">{t('checkout.email')} *</Label>
                     <Input
                       id="email"
                       type="email"
@@ -257,7 +260,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Phone *</Label>
+                    <Label htmlFor="phone">{t('checkout.phone')} *</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -269,7 +272,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="address">Address *</Label>
+                  <Label htmlFor="address">{t('checkout.address')} *</Label>
                   <Input
                     id="address"
                     value={formData.address}
@@ -280,7 +283,7 @@ export default function CheckoutPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="city">City *</Label>
+                    <Label htmlFor="city">{t('checkout.city')} *</Label>
                     <Input
                       id="city"
                       value={formData.city}
@@ -289,7 +292,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="postalCode">Postal Code</Label>
+                    <Label htmlFor="postalCode">{t('checkout.postalCode')}</Label>
                     <Input
                       id="postalCode"
                       value={formData.postalCode}
@@ -297,16 +300,16 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="country">Country *</Label>
+                    <Label htmlFor="country">{t('checkout.country')} *</Label>
                     <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Somalia">Somalia</SelectItem>
-                        <SelectItem value="Kenya">Kenya</SelectItem>
-                        <SelectItem value="Ethiopia">Ethiopia</SelectItem>
-                        <SelectItem value="Djibouti">Djibouti</SelectItem>
+                        <SelectItem value="Somalia">{t('checkout.countries.somalia')}</SelectItem>
+                        <SelectItem value="Kenya">{t('checkout.countries.kenya')}</SelectItem>
+                        <SelectItem value="Ethiopia">{t('checkout.countries.ethiopia')}</SelectItem>
+                        <SelectItem value="Djibouti">{t('checkout.countries.djibouti')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -319,28 +322,37 @@ export default function CheckoutPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
-                  Payment Information
+                  {t('checkout.paymentInformation')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Supported Payment Methods */}
+                <div className="mb-6">
+                  <Label className="text-sm font-medium text-gray-700 mb-3 block">{t('checkout.weAccept')}</Label>
+                  <div className="flex flex-wrap items-center gap-4 p-4 bg-gray-50 rounded-lg">
+ 
+                    <Image src={"/Bulaale-Accepted-Payment-Wallets.png"} alt='Bulaale Accepted Payment Wallets' width={600} height={100}/>
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="paymentMethod">Payment Method *</Label>
+                  <Label htmlFor="paymentMethod">{t('checkout.paymentMethod')} *</Label>
                   <Select value={formData.paymentMethod} onValueChange={(value) => handleInputChange('paymentMethod', value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="EVC_PLUS">EVC Plus</SelectItem>
-                      <SelectItem value="ZAAD_SERVICE">Zaad Service</SelectItem>
-                      <SelectItem value="SAHAL_SERVICE">Sahal Service</SelectItem>
-                      <SelectItem value="CASH">Cash on Delivery</SelectItem>
+                      <SelectItem value="EVC_PLUS">{t('checkout.paymentMethods.evcPlus')}</SelectItem>
+                      <SelectItem value="ZAAD_SERVICE">{t('checkout.paymentMethods.zaadService')}</SelectItem>
+                      <SelectItem value="SAHAL_SERVICE">{t('checkout.paymentMethods.sahalService')}</SelectItem>
+                      <SelectItem value="CASH">{t('checkout.paymentMethods.cashOnDelivery')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {formData.paymentMethod !== 'CASH' && (
                   <div>
-                    <Label htmlFor="phoneNumber">Phone Number for Payment *</Label>
+                    <Label htmlFor="phoneNumber">{t('checkout.phoneNumber')} *</Label>
                     <Input
                       id="phoneNumber"
                       type="tel"
@@ -357,11 +369,11 @@ export default function CheckoutPage() {
             {/* Order Notes */}
             <Card>
               <CardHeader>
-                <CardTitle>Order Notes</CardTitle>
+                <CardTitle>{t('checkout.orderNotes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea
-                  placeholder="Any special instructions for your order..."
+                  placeholder={t('checkout.notes')}
                   value={formData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   rows={3}
@@ -376,7 +388,7 @@ export default function CheckoutPage() {
               className="w-full"
               disabled={isProcessing}
             >
-              {isProcessing ? 'Processing Order...' : `Place Order - $${getFinalTotal().toFixed(2)}`}
+              {isProcessing ? t('checkout.processingOrder') : `${t('checkout.placeOrder')} - $${getFinalTotal().toFixed(2)}`}
             </Button>
           </form>
         </div>
@@ -385,7 +397,7 @@ export default function CheckoutPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <CardTitle>{t('checkout.orderSummary')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Discount Alert */}
@@ -398,10 +410,10 @@ export default function CheckoutPage() {
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-green-800">
-                          🎉 Great Savings!
+                          🎉 {t('checkout.totals.greatSavings')}
                         </div>
                         <div className="text-xs text-green-700">
-                          You're saving {((totalDiscount / getSubtotal()) * 100).toFixed(1)}%
+                          {t('checkout.totals.savingPercentage', { percentage: ((totalDiscount / getSubtotal()) * 100).toFixed(1) })}
                         </div>
                       </div>
                     </div>
@@ -410,7 +422,7 @@ export default function CheckoutPage() {
                         -${totalDiscount.toFixed(2)}
                       </div>
                       <div className="text-xs text-green-600">
-                        Total savings
+                        {t('checkout.totals.totalSavings')}
                       </div>
                     </div>
                   </div>
@@ -445,7 +457,7 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <p className="text-xs text-gray-500">
-                        Qty: {item.quantity}
+                        {t('common.quantity')}: {item.quantity}
                       </p>
                     </div>
                     <div className="text-right">
@@ -460,7 +472,7 @@ export default function CheckoutPage() {
                             </span>
                           </div>
                           <div className="text-xs text-green-600">
-                            Save ${(getItemDiscount(item)?.itemDiscountAmount || 0).toFixed(2)}
+                            {t('common.save')} ${(getItemDiscount(item)?.itemDiscountAmount || 0).toFixed(2)}
                           </div>
                         </div>
                       ) : (
@@ -478,14 +490,14 @@ export default function CheckoutPage() {
               {/* Totals */}
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-gray-600">{t('checkout.totals.subtotal')}</span>
                   <span className="font-medium">${getSubtotal().toFixed(2)}</span>
                 </div>
                 
                 {/* Applied Discounts */}
                 {appliedDiscounts && appliedDiscounts.length > 0 && (
                   <div className="bg-gray-50 p-2 rounded-lg">
-                    <div className="text-xs font-medium text-gray-700 mb-1">Applied Discounts:</div>
+                    <div className="text-xs font-medium text-gray-700 mb-1">{t('checkout.totals.appliedDiscounts')}:</div>
                     {appliedDiscounts.map((discount, index) => (
                       <div key={index} className="flex justify-between text-xs">
                         <span className="text-gray-600">
@@ -503,28 +515,28 @@ export default function CheckoutPage() {
 
                 {totalDiscount > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span className="font-medium">Total Discount</span>
+                    <span className="font-medium">{t('checkout.totals.totalDiscount')}</span>
                     <span className="font-bold">-${totalDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium text-green-600">Free</span>
+                  <span className="text-gray-600">{t('checkout.totals.shipping')}</span>
+                  <span className="font-medium text-green-600">{t('common.free')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">VAT ({(getVATRate() * 100).toFixed(0)}%)</span>
+                  <span className="text-gray-600">{t('checkout.totals.vat')} ({(getVATRate() * 100).toFixed(0)}%)</span>
                   <span className="font-medium">${getVATAmount().toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
+                  <span className="text-lg font-semibold text-gray-900">{t('checkout.totals.total')}</span>
                   <span className="text-lg font-bold text-primary">${getFinalTotal().toFixed(2)}</span>
                 </div>
                 
                 {totalDiscount > 0 && (
                   <div className="text-center text-sm text-green-600 bg-green-50 p-2 rounded-lg">
-                    You save ${totalDiscount.toFixed(2)} on this order
+                    {t('checkout.totals.youSave', { amount: totalDiscount.toFixed(2) })} {t('common.on')} {t('common.this')} {t('common.order')}
                   </div>
                 )}
               </div>

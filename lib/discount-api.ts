@@ -56,6 +56,7 @@ export interface DiscountPreview {
   type: 'PERCENT' | 'FIXED' | 'BOGO';
   value: number;
   amount: number;
+  maxDiscount?: number;
   code?: string;
   targetProducts?: Array<{ 
     id: string;
