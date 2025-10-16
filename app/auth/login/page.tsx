@@ -15,19 +15,21 @@ import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useAuthStore } from '@/lib/stores/auth-store';
-
-const loginSchema = z.object({
-  username: z.string().min(1, "Username is required").min(3, "Username must be at least 3 characters"),
-  password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { useTranslation } from '@/lib/contexts/i18n-context';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, setLoading, isLoading } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslation();
+
+  const loginSchema = z.object({
+    username: z.string().min(1, t('errors.required')).min(3, t('errors.usernameTooShort')),
+    password: z.string().min(1, t('errors.required')).min(6, t('errors.passwordTooShort')),
+  });
+
+  type LoginFormValues = z.infer<typeof loginSchema>;
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -52,14 +54,14 @@ export default function LoginPage() {
         // Store user data in Zustand (token is handled by HTTP-only cookie)
         login(userData);
         
-        toast.success("Welcome back! You have been successfully logged in.");
+        toast.success(t('auth.loginSuccess'));
         router.push('/');
       } else {
-        toast.error(response.data.message || 'Login failed');
+        toast.error(response.data.message || t('errors.generic'));
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Login failed. Please try again.';
+      const errorMessage = error.response?.data?.error || error.message || t('errors.generic');
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -69,15 +71,7 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left Side - Image */}
-      <div className="bg-muted relative hidden lg:block flex items-end justify-start h-screen w-full">
-        <Image
-          src="/Somali-Kid.jpg"
-          alt="Bulaale Baby Care"
-          fill
-          className="object-cover dark:brightness-[0.2] dark:grayscale"
-        />
-      </div>
+      
 
       {/* Right Side - Form */}
       <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -87,9 +81,9 @@ export default function LoginPage() {
           <div className="w-full max-w-md">
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+                <CardTitle className="text-2xl font-bold">{t('auth.welcomeBack')}</CardTitle>
                 <p className="text-muted-foreground">
-                  Sign in to your account to continue shopping
+                  {t('auth.signInToAccount')}
                 </p>
               </CardHeader>
               <CardContent>
@@ -104,14 +98,14 @@ export default function LoginPage() {
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel>{t('auth.username')}</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input 
                                   {...field} 
                                   type="text" 
-                                  placeholder="Enter your username" 
+                                  placeholder={t('auth.enterUsername')} 
                                   disabled={isSubmitting}
                                   className="pl-10"
                                 />
@@ -128,12 +122,12 @@ export default function LoginPage() {
                         render={({ field }) => (
                           <FormItem>
                             <div className="flex items-center">
-                              <FormLabel>Password</FormLabel>
+                              <FormLabel>{t('auth.password')}</FormLabel>
                               <Link
                                 href="/auth/forgot-password"
                                 className="ml-auto text-sm underline-offset-4 hover:underline"
                               >
-                                Forgot your password?
+                                {t('auth.forgotPassword')}
                               </Link>
                             </div>
                             <FormControl>
@@ -142,7 +136,7 @@ export default function LoginPage() {
                                 <Input 
                                   {...field} 
                                   type={showPassword ? "text" : "password"} 
-                                  placeholder="Enter your password"
+                                  placeholder={t('auth.enterPassword')}
                                   disabled={isSubmitting}
                                   className="pl-10 pr-10"
                                 />
@@ -177,7 +171,7 @@ export default function LoginPage() {
                           className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                         />
                         <label htmlFor="remember-me" className="text-sm text-muted-foreground">
-                          Remember me
+                          {t('auth.rememberMe')}
                         </label>
                       </div>
                     </div>
@@ -190,10 +184,10 @@ export default function LoginPage() {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing in...
+                          {t('auth.signingIn')}
                         </>
                       ) : (
-                        "Sign In"
+                        t('auth.signIn')
                       )}
                     </Button>
                   </form>
@@ -201,9 +195,9 @@ export default function LoginPage() {
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Don't have an account?{' '}
+                    {t('auth.dontHaveAccount')}{' '}
                     <Link href="/auth/register" className="font-medium text-primary hover:text-primary/80">
-                      Sign up here
+                      {t('auth.signUp')}
                     </Link>
                   </p>
                 </div>
@@ -212,13 +206,13 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center">
               <p className="text-xs text-muted-foreground">
-                By signing in, you agree to our{' '}
+                {t('auth.agreeToTerms')}{' '}
                 <Link href="/terms" className="font-medium text-primary hover:text-primary/80">
-                  Terms of Service
+                  {t('common.terms')}
                 </Link>{' '}
-                and{' '}
+                {t('common.and')}{' '}
                 <Link href="/privacy" className="font-medium text-primary hover:text-primary/80">
-                  Privacy Policy
+                  {t('common.privacy')}
                 </Link>
               </p>
             </div>

@@ -1,5 +1,6 @@
 {
   "common": {
+    "and": "and",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -176,6 +177,7 @@
     "firstName": "First Name",
     "lastName": "Last Name",
     "phone": "Phone",
+    "username": "Username",
     "forgotPassword": "Forgot Password?",
     "resetPassword": "Reset Password",
     "changePassword": "Change Password",
@@ -188,7 +190,18 @@
     "createAccount": "Create Account",
     "loginSuccess": "Login successful",
     "registerSuccess": "Registration successful",
-    "logoutSuccess": "Logout successful"
+    "logoutSuccess": "Logout successful",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account...",
+    "signInToAccount": "Sign in to your account to continue shopping",
+    "joinAndShop": "Join Bulaale Baby Care and start shopping today",
+    "enterUsername": "Enter your username",
+    "enterPassword": "Enter your password",
+    "enterFullName": "Enter your full name",
+    "profilePicture": "Profile Picture (Optional)",
+    "uploadPicture": "Upload Picture",
+    "changePicture": "Change Picture",
+    "agreeToTerms": "By signing in, you agree to our"
   },
   "orders": {
     "title": "Orders",
@@ -226,6 +239,16 @@
     "invalidCredentials": "Invalid email or password.",
     "accountNotFound": "Account not found.",
     "accountDisabled": "Account is disabled.",
-    "sessionExpired": "Session expired. Please login again."
+    "sessionExpired": "Session expired. Please login again.",
+    "usernameTooShort": "Username must be at least 3 characters",
+    "usernameTooLong": "Username must be less than 30 characters",
+    "usernameInvalid": "Username can only contain letters, numbers, and underscores",
+    "nameTooShort": "Name must be at least 3 characters",
+    "nameTooLong": "Name must be less than 100 characters",
+    "passwordUppercase": "Password must contain at least one uppercase letter",
+    "passwordLowercase": "Password must contain at least one lowercase letter",
+    "passwordNumber": "Password must contain at least one number",
+    "passwordSpecial": "Password must contain at least one special character",
+    "confirmPassword": "Please confirm your password"
   }
 }

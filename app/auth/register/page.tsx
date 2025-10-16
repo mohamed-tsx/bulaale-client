@@ -17,20 +17,7 @@ import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useAuthStore } from '@/lib/stores/auth-store';
-
-const registerSchema = z.object({
-  username: z.string().min(1, "Username is required").min(3, "Username must be at least 3 characters").max(30, "Username must be less than 30 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
-  name: z.string().min(1, "Name is required").min(3, "Name must be at least 3 characters").max(100, "Name must be less than 100 characters"),
-  phoneNumber: z.string().min(1, "Phone number is required").regex(/^\+?[0-9]{7,15}$/, "Phone number must be 7-15 digits (optional + prefix)"),
-  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required").min(8, "Password must be at least 8 characters").regex(/[A-Z]/, "Password must contain at least one uppercase letter").regex(/[a-z]/, "Password must contain at least one lowercase letter").regex(/[0-9]/, "Password must contain at least one number").regex(/[^\w\s]/, "Password must contain at least one special character"),
-  confirmPassword: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
+import { useTranslation } from '@/lib/contexts/i18n-context';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -40,6 +27,21 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const t = useTranslation();
+
+  const registerSchema = z.object({
+    username: z.string().min(1, t('errors.required')).min(3, t('errors.usernameTooShort')).max(30, t('errors.usernameTooLong')).regex(/^[a-zA-Z0-9_]+$/, t('errors.usernameInvalid')),
+    name: z.string().min(1, t('errors.required')).min(3, t('errors.nameTooShort')).max(100, t('errors.nameTooLong')),
+    phoneNumber: z.string().min(1, t('errors.required')).regex(/^\+?[0-9]{7,15}$/, t('errors.invalidPhone')),
+    email: z.string().min(1, t('errors.required')).email(t('errors.invalidEmail')),
+    password: z.string().min(1, t('errors.required')).min(8, t('errors.passwordTooShort')).regex(/[A-Z]/, t('errors.passwordUppercase')).regex(/[a-z]/, t('errors.passwordLowercase')).regex(/[0-9]/, t('errors.passwordNumber')).regex(/[^\w\s]/, t('errors.passwordSpecial')),
+    confirmPassword: z.string().min(1, t('errors.confirmPassword')),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t('errors.passwordsDoNotMatch'),
+    path: ["confirmPassword"],
+  });
+
+  type RegisterFormValues = z.infer<typeof registerSchema>;
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -106,14 +108,14 @@ export default function RegisterPage() {
       
       if (response.data.success) {
         // Registration successful - redirect to login
-        toast.success("Account created successfully! Please log in to continue.");
+        toast.success(t('auth.registerSuccess'));
         router.push('/auth/login');
       } else {
-        toast.error(response.data.message || 'Registration failed');
+        toast.error(response.data.message || t('errors.generic'));
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Registration failed. Please try again.';
+      const errorMessage = error.response?.data?.error || error.message || t('errors.generic');
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -122,22 +124,17 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-screen lg:grid-cols-2 items-center ">
       {/* Left Side - Form */}
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
-          <Link href="/" className="flex items-center gap-2 font-medium">
-            <Image src="/Logo.svg" alt="Bulaale Baby Care" width={120} height={40} />
-          </Link>
-        </div>
+      <div className="flex flex-col gap-4 p-6 md:p-10 max-w-7xl mx-auto">
         
         <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-xl">
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
+                <CardTitle className="text-2xl font-bold">{t('auth.createAccount')}</CardTitle>
                 <p className="text-muted-foreground">
-                  Join Bulaale Baby Care and start shopping today
+                  {t('auth.joinAndShop')}
                 </p>
               </CardHeader>
               <CardContent>
@@ -152,14 +149,14 @@ export default function RegisterPage() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel>{t('auth.firstName')}</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input 
                                   {...field} 
                                   type="text" 
-                                  placeholder="Enter your full name" 
+                                  placeholder={t('auth.enterFullName')} 
                                   disabled={isSubmitting}
                                   className="pl-10"
                                 />
@@ -172,7 +169,7 @@ export default function RegisterPage() {
 
                       {/* Avatar Upload */}
                       <div className="space-y-2">
-                        <Label>Profile Picture (Optional)</Label>
+                        <Label>{t('auth.profilePicture')}</Label>
                         <div className="flex items-center gap-4">
                           <div className="relative">
                             {avatarPreview ? (
@@ -210,7 +207,7 @@ export default function RegisterPage() {
                               className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 border border-border rounded-md text-sm hover:bg-muted transition-colors"
                             >
                               <Upload className="w-4 h-4" />
-                              {avatarFile ? 'Change Picture' : 'Upload Picture'}
+                              {avatarFile ? t('auth.changePicture') : t('auth.uploadPicture')}
                             </label>
                             <p className="text-xs text-muted-foreground mt-1">
                               Max 5MB, JPG/PNG/GIF
@@ -394,13 +391,13 @@ export default function RegisterPage() {
                         className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                       />
                       <label htmlFor="agree-terms" className="text-sm text-muted-foreground">
-                        I agree to the{' '}
+                        {t('auth.agreeToTerms')}{' '}
                         <Link href="/terms" className="font-medium text-primary hover:text-primary/80">
-                          Terms of Service
+                          {t('common.terms')}
                         </Link>{' '}
-                        and{' '}
+                        {t('common.and')}{' '}
                         <Link href="/privacy" className="font-medium text-primary hover:text-primary/80">
-                          Privacy Policy
+                          {t('common.privacy')}
                         </Link>
                       </label>
                     </div>
@@ -413,10 +410,10 @@ export default function RegisterPage() {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating account...
+                          {t('auth.creatingAccount')}
                         </>
                       ) : (
-                        "Create Account"
+                        t('auth.createAccount')
                       )}
                     </Button>
                   </form>
@@ -424,9 +421,9 @@ export default function RegisterPage() {
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Already have an account?{' '}
+                    {t('auth.alreadyHaveAccount')}{' '}
                     <Link href="/auth/login" className="font-medium text-primary hover:text-primary/80">
-                      Sign in here
+                      {t('auth.signIn')}
                     </Link>
                   </p>
                 </div>
@@ -439,7 +436,7 @@ export default function RegisterPage() {
       {/* Left Side - Image */}
       <div className="bg-muted relative hidden lg:block flex items-end justify-start h-screen w-full">
         <Image
-          src="/Somalis-Kid.jpg"
+          src="/Somali-Kid.jpg"
           alt="Bulaale Baby Care"
           fill
           className="object-cover dark:brightness-[0.2] dark:grayscale"

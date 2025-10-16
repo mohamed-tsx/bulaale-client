@@ -1,5 +1,6 @@
 {
   "common": {
+    "and": "iyo",
     "loading": "Waa la socda...",
     "error": "Qalad",
     "success": "Guul",
@@ -45,7 +46,7 @@
     "trackOrder": "Raadi Dalabka",
     "orderHistory": "Taariikhda Dalabka",
     "myAccount": "Koontadayda",
-    "login": "Gali",
+    "login": "Soo Gal",
     "logout": "Ka bax",
     "register": "Diiwaan geli",
     "forgotPassword": "Ereyga sirta ah ma ilowday?",
@@ -101,7 +102,7 @@
     "placeOrder": "Dir Dalabka",
     "loggedInAs": "Waxaad gashay sida",
     "guestCheckout": "Lacag bixinta martida",
-    "loginToSave": "Gali si aad u kaydiso dalabkaaga",
+    "loginToSave": "Soo Gal si aad u kaydiso dalabkaaga",
     "trackWithOrderNumber": "Waxaad raadi kartaa dalabkaaga adoo isticmaalaya lambarka dalabka",
     "orderPlacedSuccessfully": "Dalabka waa la diray si guul leh!",
     "orderPlacedSuccessfullyWithEmail": "Dalabka waa la diray si guul leh! Waxaad heli doontaa email xaqiijin dhawaan.",
@@ -167,7 +168,7 @@
     "youMightAlsoLike": "Waxaad jeclaan kartaa"
   },
   "auth": {
-    "login": "Gali",
+    "login": "Soo Gal",
     "register": "Diiwaan geli",
     "logout": "Ka bax",
     "email": "Email",
@@ -176,6 +177,7 @@
     "firstName": "Magaca Hore",
     "lastName": "Magaca Dambe",
     "phone": "Telefoon",
+    "username": "Magaca Isticmaalaha",
     "forgotPassword": "Ereyga sirta ah ma ilowday?",
     "resetPassword": "Dib u deji Ereyga sirta ah",
     "changePassword": "Beddel Ereyga sirta ah",
@@ -183,12 +185,23 @@
     "dontHaveAccount": "Ma haysataa koontada?",
     "alreadyHaveAccount": "Horeyba ma haysataa koontada?",
     "signUp": "Diiwaan geli",
-    "signIn": "Gali",
+    "signIn": "Soo Gal",
     "welcomeBack": "Soo dhawoow",
     "createAccount": "Abuur Koontada",
     "loginSuccess": "Gelitaanka waa guul",
     "registerSuccess": "Diiwaangelinta waa guul",
-    "logoutSuccess": "Ka baxida waa guul"
+    "logoutSuccess": "Ka baxida waa guul",
+    "signingIn": "Waa la Soo Galyaa...",
+    "creatingAccount": "Koontada waa la abuuraa...",
+    "signInToAccount": "Soo Gal koontadaada si aad u sii wadid iibsashada",
+    "joinAndShop": "Ku biir Bulaale Baby Care oo maanta bilow iibsashada",
+    "enterUsername": "Geli magaca isticmaalahaaga",
+    "enterPassword": "Geli ereyga sirta ahaaga",
+    "enterFullName": "Geli magacaaga buuxa",
+    "profilePicture": "Sawirka Profile (Ikhtiyaari)",
+    "uploadPicture": "Soo geli Sawir",
+    "changePicture": "Beddel Sawir",
+    "agreeToTerms": "Markaad gasho, waxaad u heshay"
   },
   "orders": {
     "title": "Dalabka",
@@ -226,6 +239,16 @@
     "invalidCredentials": "Email ama ereyga sirta ah ma sax ah.",
     "accountNotFound": "Koontada lama helin.",
     "accountDisabled": "Koontada waa la joojiyay.",
-    "sessionExpired": "Waqtiga waa dhammaaday. Fadlan mar kale gali."
+    "sessionExpired": "Waqtiga waa dhammaaday. Fadlan mar kale Soo Gal.",
+    "usernameTooShort": "Magaca isticmaalaha waa inuu ugu yaraan 3 xaraf yahay",
+    "usernameTooLong": "Magaca isticmaalaha waa inuu ka yar yahay 30 xaraf",
+    "usernameInvalid": "Magaca isticmaalaha wuxuu kaliya u qaadan karaa xuruuf, tiro, iyo calaamado",
+    "nameTooShort": "Magaca waa inuu ugu yaraan 3 xaraf yahay",
+    "nameTooLong": "Magaca waa inuu ka yar yahay 100 xaraf",
+    "passwordUppercase": "Ereyga sirta ah waa inuu ku jiraa ugu yaraan hal xaraf weyn",
+    "passwordLowercase": "Ereyga sirta ah waa inuu ku jiraa ugu yaraan hal xaraf yar",
+    "passwordNumber": "Ereyga sirta ah waa inuu ku jiraa ugu yaraan hal tiro",
+    "passwordSpecial": "Ereyga sirta ah waa inuu ku jiraa ugu yaraan hal calaamad gaar ah",
+    "confirmPassword": "Fadlan xaqiiji ereyga sirta ahaaga"
   }
 }
